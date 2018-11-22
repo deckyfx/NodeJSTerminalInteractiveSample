@@ -1,0 +1,14 @@
+<HotelPropertyDescriptionRQ xmlns="http://webservices.sabre.com/sabreXML/2011/10" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2.3.0" ReturnHostCommand="true">
+    <AvailRequestSegment>
+        <GuestCounts Count="1"/>
+        <HotelSearchCriteria>
+            <Criterion>
+                <HotelRef HotelCode="{HOTEL_CODE}"/>            
+            </Criterion>
+        </HotelSearchCriteria>
+        <RatePlanCandidates>
+            <RateRange CurrencyCode="USD"/>
+        </RatePlanCandidates>    
+        <TimeSpan End="12-15" Start="12-14"/>             
+    </AvailRequestSegment>
+</HotelPropertyDescriptionRQ>

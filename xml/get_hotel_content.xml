@@ -1,0 +1,27 @@
+<GetHotelContentRQ xmlns="http://services.sabre.com/hotel/content/v1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.0.0" xsi:schemaLocation="http://services.sabre.com/hotel/content/v1 GetHotelContentRQ.xsd">
+    <SearchCriteria>
+        <HotelRefs>
+            {HOTEL_CODES}
+            <!--  <HotelRef HotelCode="{HOTEL_CODES}" /> -->
+        </HotelRefs>
+        <DescriptiveInfoRef>
+            <PropertyInfo>true</PropertyInfo>
+            <LocationInfo>true</LocationInfo>
+            <Amenities>true</Amenities>
+            <Descriptions>
+                <Description Type="Dining" />
+                <Description Type="Alerts" />
+            </Descriptions>
+            <Airports>true</Airports>
+            <AcceptedCreditCards>true</AcceptedCreditCards>
+        </DescriptiveInfoRef>
+        <ImageRef MaxImages="10">
+            <Images>
+                <!--  "Image" Optional -->
+                <!--  Repeat Factor = 5 -->
+                <!-- "Type" is Optional .Allowed values for "Type" are ORIGINAL, THUMBNAIL, SMALL, MEDIUM, LARGE  -->
+                <Image Type="ORIGINAL" />
+            </Images>
+        </ImageRef>
+    </SearchCriteria>
+</GetHotelContentRQ>

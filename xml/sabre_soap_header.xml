@@ -1,0 +1,21 @@
+<wsse:Security xmlns:wsse="http://schemas.xmlsoap.org/ws/2002/12/secext">
+    <!--Optional:-->
+    <wsse:BinarySecurityToken>{TOKEN}</wsse:BinarySecurityToken>
+</wsse:Security>
+<eb:MessageHeader xmlns:eb="http://www.ebxml.org/namespaces/messageHeader" eb:version="1.0" soapenv:mustUnderstand="1">
+    <eb:From>
+        <eb:PartyId eb:type="URI" />
+    </eb:From>
+    <eb:To>
+        <eb:PartyId eb:type="URI" />
+    </eb:To>
+    <eb:CPAId>4U1I</eb:CPAId>
+    <eb:ConversationId>support@sabre.com</eb:ConversationId>
+    <eb:Service eb:type="OTA"></eb:Service>
+    <eb:Action>{REQUEST_ACTION}</eb:Action>
+    <eb:MessageData>
+        <eb:MessageId>1977645236579030221</eb:MessageId>
+        <eb:Timestamp>2018-02-15T06:34:17</eb:Timestamp>
+        <eb:RefToMessageId>1234</eb:RefToMessageId>
+    </eb:MessageData>
+</eb:MessageHeader>

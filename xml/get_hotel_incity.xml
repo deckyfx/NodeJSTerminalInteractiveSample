@@ -1,0 +1,16 @@
+<OTA_HotelAvailRQ xmlns="http://webservices.sabre.com/sabreXML/2011/10" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" TimeStamp="2011-11-01T15:00:00" Version="2.3.0" ReturnHostCommand="true">
+    <AvailRequestSegment>
+        <GuestCounts Count="1"/>
+        <HotelSearchCriteria NumProperties="1000">
+            <Criterion>
+                <HotelRef HotelCityCode="{CITY_CODE}" {SEARCH_ATTRIBUTES}/>
+            </Criterion>
+        </HotelSearchCriteria>
+        <RatePlanCandidates >
+            <RatePlanCode>W</RatePlanCode>
+            <RatePlanCode>C</RatePlanCode>
+            <RateRange CurrencyCode="USD"/>
+        </RatePlanCandidates>
+        <TimeSpan End="12-15" Start="12-14"/>  
+    </AvailRequestSegment>
+</OTA_HotelAvailRQ>

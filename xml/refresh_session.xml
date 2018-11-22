@@ -1,0 +1,3 @@
+<OTA_PingRQ TimeStamp="{TIMESTAMP}" Version="1.0.0">
+    <EchoData> Are you there </EchoData>
+</OTA_PingRQ>

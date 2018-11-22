@@ -1,0 +1,8 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+   <soapenv:Header>
+        {REQUEST_HEADER}
+   </soapenv:Header>
+   <soapenv:Body>
+		{REQUEST_BODY}
+   </soapenv:Body>
+</soapenv:Envelope>

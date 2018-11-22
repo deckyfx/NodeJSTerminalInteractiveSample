@@ -1,0 +1,84 @@
+{
+  "name": "suitetreat",
+  "version": "1.0.0",
+  "description": "Suitetreat Resource Fetcher",
+  "main": "build/index.js",
+  "bin": {
+    "suitetreat": "./bin/suitetreat"
+  },
+  "preferGlobal": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "reset": "echo \"[]\" > caches/hotel_search.json",
+    "compile": "./node_modules/.bin/tsc -p tsconfig.json",
+    "compile-win": "node_modules\\.bin\\tsc.cmd -p tsconfig.json",
+    "cleanbuild": "rm -r ./build/*",
+    "movebuild": "mv ./build/src/* ./build/",
+    "start": "node ./build/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1412/suitetreat.git"
+  },
+  "keywords": [
+    "Suitetreat"
+  ],
+  "author": "Decky Fx",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/1412/suitetreat/issues"
+  },
+  "homepage": "https://github.com/1412/suitetreat#readme",
+  "dependencies": {
+    "@types/backbone": "^1.3.43",
+    "@types/chalk": "^2.2.0",
+    "@types/cli-color": "^0.3.29",
+    "@types/figures": "^2.0.0",
+    "@types/html-entities": "^1.2.16",
+    "@types/inquirer": "0.0.42",
+    "@types/jsdom": "^11.0.6",
+    "@types/leven": "^2.1.1",
+    "@types/lodash": "^4.14.111",
+    "@types/moment": "^2.13.0",
+    "@types/mongoose": "^5.2.0",
+    "@types/node": "^10.5.2",
+    "@types/papaparse": "^4.5.2",
+    "@types/parse5": "^5.0.0",
+    "@types/request": "^2.47.1",
+    "@types/request-promise-native": "^1.0.15",
+    "@types/uniqid": "^4.1.2",
+    "@types/winston": "^2.3.9",
+    "airport-codes": "^1.0.2",
+    "backbone": "^1.3.3",
+    "boxen": "^1.3.0",
+    "chalk": "^2.4.1",
+    "cli-color": "^1.2.0",
+    "clui": "^0.3.6",
+    "country-data": "0.0.31",
+    "eslint": "^5.1.0",
+    "figures": "^2.0.0",
+    "html-entities": "^1.2.1",
+    "inquirer": "^6.0.0",
+    "inquirer-checkbox-plus-prompt": "^1.0.1",
+    "jsdom": "^11.11.0",
+    "leven": "^2.1.0",
+    "lodash": "^4.17.10",
+    "moment": "^2.22.2",
+    "mongoose": "^5.2.2",
+    "papaparse": "^4.5.1",
+    "readable-stream": "^2.3.6",
+    "really-relaxed-json": "^0.2.24",
+    "request": "^2.87.0",
+    "request-promise-native": "^1.0.5",
+    "tempus-fugit": "^2.3.1",
+    "tunnel-ssh": "^4.1.4",
+    "typescript": "^2.9.2",
+    "uniqid": "^5.0.3",
+    "vorpal": "^1.12.0",
+    "winston": "^3.0.0",
+    "winston-daily-rotate-file": "^3.2.3"
+  },
+  "devDependencies": {
+    "@machinomy/types-readable-stream": "git+https://github.com/machinomy/types-readable-stream.git"
+  }
+}
