@@ -3,8 +3,9 @@ import SessionRepository from "./SessionRepository";
 import mongo, { MongoDB } from "../MongoDB";
 import { Document } from "mongoose";
 import Util from "../Util";
+import RepositoryBase from "./RepositoryBase";
 
-export default class SeedHotelReoistory extends SessionRepository {
+export default class SeedHotelRepository extends RepositoryBase {
     private seedHotelSize: number = 0;
     private seedHotelProgress: number = 1;
 

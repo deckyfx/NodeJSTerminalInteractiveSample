@@ -30,7 +30,22 @@ export default class HotelRepository extends SessionRepository {
             if (task) {
                 return (new CityLookup()).LookupCity(task)
                 .then((task) => {
-                    return (new HotelLookup()).LookupHotel(task)
+                    return SessionRepository.createSession()
+                    .then(() => {
+                        return (new HotelLookup()).LookupHotel(task)
+                        .then(() => {
+                            return SessionRepository.closeSession().
+                            then(() => {
+                                return Promise.resolve(task);
+                            });
+                        })
+                        .catch((e) => {                            
+                            return SessionRepository.closeSession().
+                            then(() => {
+                                throw e;
+                            });
+                        });
+                    });
                 })
                 .then((task) => {
                     return (new MongoCityLookup()).LookupMongoCity(task);

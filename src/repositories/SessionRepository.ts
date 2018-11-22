@@ -121,15 +121,18 @@ export default abstract class SessionRepository extends RepositoryBase {
         if (SessionRepository.SESSION == null) {
             return Promise.resolve(true);
         }
-        Util.vorpal.log("Clearing local session");
-        SessionRepository.clearTokenFile();
-        return Promise.resolve(true);
-        /*
-        Util.vorpal.log("Closing sabre session");
-        let datastring = SessionRepository.readXML("session:close");
-        await SessionRepository.doRequest(datastring);
-        return Promise.resolve(true);
-        */
+        Util.vorpal.log("Closing sabre session...");
+        let datastring = SessionRepository.readXML("session:close", [{ search: "TOKEN", data: SessionRepository.SESSION.BinarySecurityToken }]);
+        return SessionRepository.doRequest(datastring)
+        .then((dom) => {
+            Util.vorpal.log("Session closed, destroys local session...");
+            SessionRepository.clearTokenFile();
+            return Promise.resolve(true);
+        })
+        .catch((e) => {
+            console.log("Failed to clean up session ", e);
+            return Promise.reject(e);
+        })
     }
 
     public static refreshSession(): Promise<SabreSession> {

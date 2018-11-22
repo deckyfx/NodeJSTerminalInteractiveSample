@@ -6,8 +6,6 @@ import * as _ from "lodash";
 import SabreHotel from "../../models/SabreHotel";
 import SessionRepository from "../SessionRepository";
 import { JSDOM } from "jsdom";
-import * as fs from 'fs';
-import * as path from 'path';
 import mongo, { MongoDB } from "../../MongoDB";
 import SabreImage from "../../models/SabreImage";
 
