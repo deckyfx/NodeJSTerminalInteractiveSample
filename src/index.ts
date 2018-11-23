@@ -9,6 +9,7 @@ import ResetIcons from "./actions/ResetIcons";
 import FixIcons from "./actions/FixIcons";
 import SuiteImages from "./actions/SuiteImages";
 import SuiteManager from "./actions/SuiteManager";
+import HotelsImagesCounter from "./actions/HotelsImagesCounter";
 import Cleanup from "./Cleanup";
 import SessionRepository from "./repositories/SessionRepository";
 
@@ -82,6 +83,12 @@ export class Startup {
                     .description('Manage Hotel Suites')
                     .alias('suites-manager')
                     .action(SuiteManager.build);
+
+                Util.vorpal
+                    .command('hotelsimagescounter')
+                    .description('Count hotels images')
+                    .alias('hotels-images-counter')
+                    .action(HotelsImagesCounter.build);
 
                 Util.vorpal
                     .delimiter(Util.clc.blue('myapp$'))

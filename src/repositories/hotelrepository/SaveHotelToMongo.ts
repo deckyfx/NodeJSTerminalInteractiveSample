@@ -60,16 +60,20 @@ export default class SaveHotelToMongo {
             }
             Util.vorpal.log(`${Util.printInfo()} Hotel found ${Util.printValue(task.mongoHotel.get("name"))} ` +
                 `(${Util.printValue(task.mongoHotel._id)}), updating`);
+                
             return new Promise<Task>((resolve, reject) => {
                 let _newdata = task.hotel!.toObject();
                 delete _newdata._id;
                 let update_data: any = {
                     sabreID: _newdata.sabreID,
                 } 
+
+                // try to replace words name;                
                 if (task.mongoHotel!.get("name") === task.mongoHotel!.get("sabreChainName")) {
-                    // try to replace words name;
                     update_data.name = task.mongoHotel!.get("sabreName").replace(/\b\w/g, (l: string) => l.toUpperCase())
                 }
+
+                // overwrite sabreID if missmatch
                 if (task.mongoHotel!.get("sabreID") !== _newdata.sabreID) {
                     update_data.sabreID = _newdata.sabreID;
                 }
@@ -78,7 +82,8 @@ export default class SaveHotelToMongo {
                 if (!task.mongoHotel!.get("logo")) {
                     update_data.logic = _newdata.logo;
                 }
-
+                
+                // overwrite description if missmatch
                 if (task.mongoHotel!.get("description") !== _newdata.description) {
                     update_data.description = _newdata.description;
                 }
@@ -87,7 +92,8 @@ export default class SaveHotelToMongo {
                 if ((task.mongoHotel!.get("images") as Array<any>).length == 0) {
                     update_data.images = _newdata.images;
                 }
-
+                
+                // overwrite taxes if missmatch
                 if (task.mongoHotel!.get("taxes") !== _newdata.taxes) {
                     update_data.taxes = _newdata.taxes;
                 }
@@ -115,6 +121,8 @@ export default class SaveHotelToMongo {
                         }
                     });
                     if (found) {
+                        // should we overwrite old suite data with the new one?
+                        // or what should we do?
                         oldsuite.set("is_available", true);
                         e += 1;
                     } else {
