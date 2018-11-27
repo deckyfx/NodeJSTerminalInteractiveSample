@@ -17,7 +17,7 @@
         <ImageRef MaxImages="10">
             <Images>
                 <!-- "Type" is Optional .Allowed values for "Type" are ORIGINAL, THUMBNAIL, SMALL, MEDIUM, LARGE  -->
-                <Image Type="ORIGINAL" />
+                <Image Type="{IMAGE_SIZE}" />
             </Images>
         </ImageRef>
     </SearchCriteria>

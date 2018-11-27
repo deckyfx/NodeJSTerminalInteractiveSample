@@ -5,7 +5,8 @@ import mongo, { MongoDB } from "../../MongoDB";
 import * as _ from "lodash";
 import { InquirerSelectHotelAnswer, InquirerInputAnswer } from "./InquirerAnswer";
 import SabreHotel from "../../models/SabreHotel";
-import SabreSuite from "../../models/SabreSuite";
+import SabreSuite, { DescriptionChangeLog } from "../../models/SabreSuite";
+import moment = require("moment");
 
 export default class SaveHotelToMongo {
     public constructor() {
@@ -119,15 +120,37 @@ export default class SaveHotelToMongo {
                         if (newsuite.get("sabreID") === oldsuite.get("sabreID")) {
                             return true;
                         }
-                    });
+                    }) as SabreSuite;
+                    let currenttime = moment(moment.now()).toDate();
                     if (found) {
                         // should we overwrite old suite data with the new one?
                         // or what should we do?
                         oldsuite.set("is_available", true);
+                        if (oldsuite.get("description") !== found.get("description")) {
+                            // add changes_log,
+                            // update updated_at
+                            let changelogs: Array<DescriptionChangeLog> = oldsuite.get("changes_log");
+                            let log = new mongo.models.DescriptionChangeLog!();
+                            log.set("description", oldsuite.get("description"));
+                            log.set("date", currenttime);
+                            changelogs.push(log);
+                            oldsuite.set("changes_log", changelogs);
+                            oldsuite.set("description", found.get("description"));
+                            oldsuite.set("verivied_at", currenttime);
+                        }
                         e += 1;
                     } else {
                         oldsuite.set("is_available", false);
                         d += 1;
+                    }
+                    if (!oldsuite.get("created_at")) {
+                        oldsuite.set("created_at", currenttime);
+                    }
+                    if (!oldsuite.get("verivied_at")) {
+                        oldsuite.set("verivied_at", currenttime);
+                    }
+                    if (!oldsuite.get("updated_at")) {
+                        oldsuite.set("updated_at", currenttime);
                     }
                     return oldsuite;
                 });

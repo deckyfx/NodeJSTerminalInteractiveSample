@@ -8,6 +8,7 @@ import SessionRepository from "../SessionRepository";
 import { JSDOM } from "jsdom";
 import mongo, { MongoDB } from "../../MongoDB";
 import SabreImage from "../../models/SabreImage";
+import moment = require("moment");
 
 export default class HotelLookup {
     public constructor() {
@@ -159,12 +160,20 @@ export default class HotelLookup {
             searchdata = `HotelName="${Util.entities.encode(Util.entities.decode(_.last(task.hotelterms)!))}"`;
         } 
         Util.vorpal.log(`Get hotels availibity in ${Util.printValue(task.city!.iata)}`);
+        let start_date = moment(moment.now()).add(1, 'M').format("YYYY-MM-DD");
+        let end_date = moment(moment.now()).add(1, 'M').add(1, 'd').format("YYYY-MM-DD");
         return SessionRepository.request("hotel:incity", [{
             search: "CITY_CODE",
             data: task.city!.iata,
         }, {
             search: "SEARCH_ATTRIBUTES",
             data: searchdata,
+        }, {
+            search: "CHECKIN_DATE",
+            data: start_date,
+        }, {
+            search: "CHECKOOUT_DATE",
+            data: end_date,
         }])
         .then((dom: JSDOM) => {
             Util.spinner.start();
@@ -213,6 +222,9 @@ export default class HotelLookup {
         return SessionRepository.request("hotel:content", [{
             search: "HOTEL_CODES",
             data: `<HotelRef HotelCode="${sabreID}" />`,
+        }, {
+            search: "IMAGE_SIZE",
+            data: "ORIGINAL" // THUMBNAIL, SMALL, MEDIUM, LARGE 
         }])
         .then((dom: JSDOM) => {
             const document = dom.window.document;
@@ -293,9 +305,17 @@ export default class HotelLookup {
     private GetHotelPropertyDescription(task: Task): Promise<Task> {
         let sabreID = task.hotel? task.hotel!.get("sabreID") : task.get("sabreID")
         Util.vorpal.log(`Get hotel property description for ${Util.printValue(sabreID)}`);
+        let start_date = moment(moment.now()).add(1, 'M').format("YYYY-MM-DD");
+        let end_date = moment(moment.now()).add(1, 'M').add(1, 'd').format("YYYY-MM-DD");
         return SessionRepository.request("hotel:description", [{
             search: "HOTEL_CODE",
             data: sabreID,
+        }, {
+            search: "CHECKIN_DATE",
+            data: start_date,
+        }, {
+            search: "CHECKOOUT_DATE",
+            data: end_date,
         }])
         .then((dom: JSDOM) => {
             const document = dom.window.document;
@@ -363,7 +383,7 @@ export default class HotelLookup {
                 }
                 result.set("rate", parseFloat(rate!.getAttribute('Amount')!));
                 result.set("discounts", []);
-                result.set(".images", []);
+                result.set("images", []);
                 result.set("facilities", []);
                 result.set("is_visible", true);
                 result.set("is_available", true);
@@ -371,6 +391,11 @@ export default class HotelLookup {
                 if (commission.get("enabled")) {
                     results.push(result);
                 }
+                let currenttime = moment(moment.now()).toDate();
+                result.set("changes_log", []);
+                result.set("created_at", currenttime);
+                result.set("updated_at", currenttime);
+                result.set("verivied_at", currenttime);
             }
             // Sort by hotel rate
             results = _.sortBy(results, ["rate"], ["asc"]);

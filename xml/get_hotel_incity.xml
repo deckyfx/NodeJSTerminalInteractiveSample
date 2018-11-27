@@ -11,6 +11,6 @@
             <RatePlanCode>C</RatePlanCode>
             <RateRange CurrencyCode="USD"/>
         </RatePlanCandidates>
-        <TimeSpan End="12-15" Start="12-14"/>  
+        <TimeSpan Start="{CHECKIN_DATE}" End="{CHECKOOUT_DATE}" />  
     </AvailRequestSegment>
 </OTA_HotelAvailRQ>

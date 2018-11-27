@@ -54,11 +54,13 @@ export class MongoDB {
         
         this.models.RateCancelPolicy = this.mongo.model<SabreImage>('RateCancelPolicy', new this.mongo.Schema(SabreSuiteSchema.CancelPolicySCHEMA));        
         this.models.RateCommission = this.mongo.model<SabreImage>('RateCommission', new this.mongo.Schema(SabreSuiteSchema.CommissionSCHEMA));        
-        this.models.RateTaxes = this.mongo.model<SabreImage>('RateTaxes', new this.mongo.Schema(SabreSuiteSchema.TaxesSCHEMA));
+        this.models.RateTaxes = this.mongo.model<SabreImage>('RateTaxes', new this.mongo.Schema(SabreSuiteSchema.TaxesSCHEMA));    
+        this.models.DescriptionChangeLog = this.mongo.model<SabreImage>('DescriptionChangeLog', new this.mongo.Schema(SabreSuiteSchema.DescriptionChangeLogSchema));
         
         SabreSuiteSchema.SCHEMA = _.assign(this.models.Hotel!.schema.obj.suites[0].obj, SabreSuiteSchema.SCHEMA);
         SabreSuiteSchema.SCHEMA.commission = this.models.RateCommission!.schema;
         SabreSuiteSchema.SCHEMA.cancel_policy = this.models.RateCancelPolicy!.schema;
+        SabreSuiteSchema.SCHEMA.changes_log = [this.models.DescriptionChangeLog!.schema];
         SabreSuiteSchema.SCHEMA.taxes = this.models.RateTaxes!.schema;    
 
         this.models.SabreSuite = this.mongo.model<SabreImage>('SabreSuite', new this.mongo.Schema(SabreSuiteSchema.SCHEMA));
@@ -142,6 +144,7 @@ class MongoModelCollection {
     public RateCommission?: mongoose.Model<any>;
     public RateCancelPolicy?: mongoose.Model<any>;
     public RateTaxes?: mongoose.Model<any>;
+    public DescriptionChangeLog?: mongoose.Model<any>;
     public HotelsBak?: mongoose.Model<SabreHotel>;
 }
 

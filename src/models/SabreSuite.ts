@@ -18,6 +18,11 @@ export default interface SabreSuite extends Document {
     cancel_policy?: SuiteCancelPolicy;
     commission?: SuiteCommission;
     dca_cancelation?: string;
+
+    updated_at?: Date;
+    created_at?: Date;
+    verivied_at?: Date;
+    changes_log?: Array<DescriptionChangeLog>;
 }
 
 export class SuiteCancelPolicy {
@@ -38,6 +43,11 @@ export class SuiteTaxes {
     public total_rate?: number;
 }
 
+export class DescriptionChangeLog {
+    public date?: Date;
+    public description?: string;
+}
+
 export class SabreSuiteSchema {
     public static CommissionSCHEMA = {        
         enabled: Boolean,
@@ -54,11 +64,20 @@ export class SabreSuiteSchema {
         taxes: Number,
         total_rate: Number,
     };
+    public static DescriptionChangeLogSchema = {
+        date: Date,
+        description: String
+    };
     public static SCHEMA: any = {
         IATA: String,
         cancel_policy: SabreSuiteSchema.CancelPolicySCHEMA,
         commission: SabreSuiteSchema.CommissionSCHEMA,
         taxes: SabreSuiteSchema.TaxesSCHEMA,
         dca_cancelation: String,
+
+        updated_at: Date,
+        created_at: Date,
+        verivied_at: Date,
+        changes_log: [DescriptionChangeLog]
     };    
 }
