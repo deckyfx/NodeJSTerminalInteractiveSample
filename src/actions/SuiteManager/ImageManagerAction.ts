@@ -7,6 +7,7 @@ import mongo, { MongoDB } from "../../MongoDB";
 import _ = require("lodash");
 import TerminalFlow from "./TerminalFlow";
 import FlowDirection from "./FlowDirection";
+import moment = require("moment");
 
 enum WorkType { HOTEl, SUITE };
 
@@ -106,12 +107,14 @@ export default class ImageManagerAction {
             switch (this.workingWith) {
                 case WorkType.SUITE: {
                     let suites: SabreSuite[] = this.hotel.get("suites");
+                    let currenttime = moment(moment.now()).toDate();
                     let new_suites: SabreSuite[] = _.map(suites, (suite) => {
                         if (this.suite!.get("sabreID") === suite.get("sabreID")) {
                             let images = suite.get("images");
                             images = _.concat(images, this.parseImageURLs(a_urls));
                             suite.set("images", images);
                         }
+                        suite.set("verivied_at", currenttime);
                         return suite;
                     })
                     this.hotel.set("suites", new_suites);

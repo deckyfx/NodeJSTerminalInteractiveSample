@@ -45,7 +45,11 @@ export class SuiteTaxes {
 
 export class DescriptionChangeLog {
     public date?: Date;
-    public description?: string;
+    public label?: string;
+    public oldvalue?: string;
+    public newvalue?: string;
+    public write_by?: string;
+    public target_object_id?: string;
 }
 
 export class SabreSuiteSchema {
@@ -66,7 +70,11 @@ export class SabreSuiteSchema {
     };
     public static DescriptionChangeLogSchema = {
         date: Date,
-        description: String
+        label: String,
+        oldvalue: String,
+        newvalue: String,
+        write_by: String,
+        target_object_id: String,
     };
     public static SCHEMA: any = {
         IATA: String,

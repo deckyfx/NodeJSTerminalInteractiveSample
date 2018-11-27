@@ -131,12 +131,15 @@ export default class SaveHotelToMongo {
                             // update updated_at
                             let changelogs: Array<DescriptionChangeLog> = oldsuite.get("changes_log");
                             let log = new mongo.models.DescriptionChangeLog!();
-                            log.set("description", oldsuite.get("description"));
                             log.set("date", currenttime);
+                            log.set("label", "description");
+                            log.set("oldvalue", found.get("description"));
+                            log.set("newvalue", oldsuite.get("description"));
+                            log.set("write_by", "Bots");
                             changelogs.push(log);
                             oldsuite.set("changes_log", changelogs);
                             oldsuite.set("description", found.get("description"));
-                            oldsuite.set("verivied_at", currenttime);
+                            oldsuite.set("updated_at", currenttime);
                         }
                         e += 1;
                     } else {

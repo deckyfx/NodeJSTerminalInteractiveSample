@@ -12,6 +12,7 @@ import SuiteManager from "./actions/SuiteManager";
 import HotelsImagesCounter from "./actions/HotelsImagesCounter";
 import Cleanup from "./Cleanup";
 import SessionRepository from "./repositories/SessionRepository";
+import Server from "./Server";
 
 export class Startup {
     public static main(): number {
@@ -96,6 +97,9 @@ export class Startup {
                     .show();
             }
         );
+
+        Server.serve();
+
         return 0;
     }
 }
