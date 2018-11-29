@@ -7,6 +7,7 @@ import { InquirerSelectHotelAnswer, InquirerInputAnswer } from "./InquirerAnswer
 import SabreHotel from "../../models/SabreHotel";
 import SabreSuite, { DescriptionChangeLog } from "../../models/SabreSuite";
 import moment = require("moment");
+import { Model } from "mongoose";
 
 export default class SaveHotelToMongo {
     public constructor() {
@@ -102,75 +103,8 @@ export default class SaveHotelToMongo {
                 // Force overwrite suites;
                 // update_data.suites = _newdata.suites
                 // Don't overwrite hotel suites, instead merge them or switch the flag
-                let oldsuites = task.mongoHotel!.get("suites") as Array<SabreSuite>;
-                let newsuites = task.hotel.get("suites") as Array<SabreSuite>;
-                let d: number = 0;
-                let e: number = 0;
-                let r: number = 0;
-                oldsuites = _.filter(oldsuites, (oldsuite) => {
-                    if (oldsuite.get("sabreID")) {
-                        return true;
-                    } else {
-                        r += 1;
-                        return false;
-                    }
-                }) as Array<SabreSuite>;;
-                oldsuites = _.map(oldsuites, (oldsuite) => {
-                    let found = _.find(newsuites, (newsuite) => {
-                        if (newsuite.get("sabreID") === oldsuite.get("sabreID")) {
-                            return true;
-                        }
-                    }) as SabreSuite;
-                    let currenttime = moment(moment.now()).toDate();
-                    if (found) {
-                        // should we overwrite old suite data with the new one?
-                        // or what should we do?
-                        oldsuite.set("is_available", true);
-                        if (oldsuite.get("description") !== found.get("description")) {
-                            // add changes_log,
-                            // update updated_at
-                            let changelogs: Array<DescriptionChangeLog> = oldsuite.get("changes_log");
-                            let log = new mongo.models.DescriptionChangeLog!();
-                            log.set("date", currenttime);
-                            log.set("label", "description");
-                            log.set("oldvalue", found.get("description"));
-                            log.set("newvalue", oldsuite.get("description"));
-                            log.set("write_by", "Bots");
-                            changelogs.push(log);
-                            oldsuite.set("changes_log", changelogs);
-                            oldsuite.set("description", found.get("description"));
-                            oldsuite.set("updated_at", currenttime);
-                        }
-                        e += 1;
-                    } else {
-                        oldsuite.set("is_available", false);
-                        d += 1;
-                    }
-                    if (!oldsuite.get("created_at")) {
-                        oldsuite.set("created_at", currenttime);
-                    }
-                    if (!oldsuite.get("verivied_at")) {
-                        oldsuite.set("verivied_at", currenttime);
-                    }
-                    if (!oldsuite.get("updated_at")) {
-                        oldsuite.set("updated_at", currenttime);
-                    }
-                    return oldsuite;
-                });
-                newsuites = _.filter(newsuites, (newsuite) => {
-                    let found = _.find(oldsuites, (oldsuite) => {
-                        if (oldsuite.get("sabreID") === newsuite.get("sabreID")) {
-                            return true;
-                        }
-                    });
-                    return !found;
-                }) as Array<SabreSuite>;
-                let update_suite = _.concat(oldsuites, newsuites);
-                Util.vorpal.log(`${Util.printInfo()} ${Util.printValue(e)} suite(s) enabled, ` +
-                    `${Util.printValue(d)} suite(s) disabled, ` + 
-                    `${Util.printValue(r)} invalid suite(s) removed, ` + 
-                    `${Util.printValue(newsuites.length)} new suite(s) added`);
-                update_data.suites = update_suite;
+                update_data.suites = this.MergeSuites(task.mongoHotel!.get("suites"), task.hotel.get("suites"));
+
                 // Execute update
                 task.mongoHotel!.update({
                     $set: update_data
@@ -185,6 +119,138 @@ export default class SaveHotelToMongo {
             task.mongoHotel = null;
             return Promise.resolve(task);
         })
+    }
+
+    private MergeSuites(oldsuites: Array<SabreSuite>, newsuites: Array<SabreSuite>): Array<SabreSuite> {
+        let result: Array<SabreSuite> = [];
+
+        let d: number = 0;
+        let e: number = 0;
+        let r: number = 0;      // removed suites
+        // remove invalid suites that have no sabreID
+        oldsuites = _.filter(oldsuites, (oldsuite) => {
+            if (oldsuite.get("sabreID")) {
+                return true;
+            } else {
+                r += 1;
+                return false;
+            }
+        }) as Array<SabreSuite>;
+
+        // for every old suite, check if it also exsist in newsuites array
+        oldsuites = _.map(oldsuites, (oldsuite) => {
+            let found = _.find(newsuites, (newsuite) => {
+                if (newsuite.get("sabreID") === oldsuite.get("sabreID")) {
+                    return true;
+                }
+            }) as SabreSuite;
+            if (found) {
+                // should we overwrite old suite data with the new one?
+                // or what should we do?
+                oldsuite.set("is_available", true);
+                let changelogs: Array<DescriptionChangeLog> = oldsuite.get("changes_log") || [];
+                let watchpath: Array<string> = [
+                    "description", 
+                    "IATA", 
+                    "name", 
+                    "rate",
+                    "cancel_policy.numeric",
+                    "cancel_policy.option",
+                    "cancel_policy.description",
+                    "cancel_policy.numeric",
+                    "commission.enabled",
+                    "commission.description",
+                    "taxes.total_rate",
+                    "taxes.disclaimer",
+                    "taxes.surcharges",
+                    "taxes.taxes"
+                ];
+                changelogs = _.concat(changelogs, _.filter(_.map(
+                    watchpath, 
+                    (keypath) => {
+                        return this.CreateSuiteChangeLog(keypath, oldsuite, found);
+                    }),
+                    (log: DescriptionChangeLog) => {
+                        if (log) {
+                            oldsuite.set("updated_at",  currenttime);
+                            return true;
+                        }
+                        return false;
+                    }) as Array<DescriptionChangeLog>
+                );
+                oldsuite.set("changes_log", changelogs);
+                
+                _.forEach(watchpath, (keypath) => {
+                    let value: any;
+                    if (keypath.includes(".")) {
+                        let keypaths = keypath.split(".");
+                        value = found.get(keypaths[0]).get(keypaths[1]);
+                        let tempobj = oldsuite.get(keypaths[0]);
+                        tempobj.set(keypaths[1], value);
+                        oldsuite.set(keypaths[0], tempobj);
+                    } else {
+                        value = found.get(keypath);
+                        oldsuite.set(keypath, value);
+                    }
+                    
+                })
+                e += 1;
+            } else {
+                oldsuite.set("is_available", false);
+                d += 1;
+            }
+            let currenttime = moment(moment.now()).toDate();
+            if (!oldsuite.get("created_at")) {
+                oldsuite.set("created_at", currenttime);
+            }
+            return oldsuite;
+        });
+
+        // remove already added new suites
+        newsuites = _.filter(newsuites, (newsuite) => {
+            let found = _.find(oldsuites, (oldsuite) => {
+                if (oldsuite.get("sabreID") === newsuite.get("sabreID")) {
+                    return true;
+                }
+            });
+            return !found;
+        }) as Array<SabreSuite>;
+
+        // join both arrays
+        result = _.concat(oldsuites, newsuites);
+
+        Util.vorpal.log(`${Util.printInfo()} ${Util.printValue(e)} suite(s) enabled, ` +
+            `${Util.printValue(d)} suite(s) disabled, ` + 
+            `${Util.printValue(r)} invalid suite(s) removed, ` + 
+            `${Util.printValue(newsuites.length)} new suite(s) added`);
+
+        return result;
+    }
+
+    private CreateSuiteChangeLog(keypath: string, oldsuite: SabreSuite, newsuite: SabreSuite): DescriptionChangeLog | null {
+        let log: any;
+        let value1: any;
+        let value2: any;
+        if (keypath.includes(".")) {
+            let keypaths = keypath.split(".");
+            value1 = oldsuite.get(keypaths[0]).get(keypaths[1]);
+            value2 = newsuite.get(keypaths[0]).get(keypaths[1]);
+        } else {
+            value1 = oldsuite.get(keypath);
+            value2 = newsuite.get(keypath);
+        }
+        if (value1 !== value2) {
+            // add changes_log,
+            // update updated_at
+            let currenttime = moment(moment.now()).toDate();
+            log = new mongo.models.DescriptionChangeLog!();
+            log.set("date",     currenttime);
+            log.set("label",    keypath);
+            log.set("oldvalue", value1);
+            log.set("newvalue", value2);
+            log.set("write_by", "Bots");
+        }
+        return log;
     }
 
     private LookupMongoHotel(task: Task): Promise<Task> {
