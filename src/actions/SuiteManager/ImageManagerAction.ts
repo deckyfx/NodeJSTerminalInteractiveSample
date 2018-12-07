@@ -155,7 +155,7 @@ export default class ImageManagerAction {
         })
     }
 
-    private AskNewURL(): Promise<TerminalFlow<string>> {
+    private AskNewURL(): Promise<TerminalFlow<string>> {  
         return new Promise<TerminalFlow<string>>((resolve, reject) => {
             return Util.prompt<InquirerInputAnswer>({
                 type: 'input',
