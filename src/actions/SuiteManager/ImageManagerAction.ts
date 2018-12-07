@@ -72,7 +72,7 @@ export default class ImageManagerAction {
                         return this.commitChanges();
                     } break;
                     default: {
-                        return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
+                        return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.PREVIOUS, new ActionResult()));
                     } break;
                 }
             } else {
