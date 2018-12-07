@@ -55,6 +55,7 @@ export default class ImageManagerAction {
             default: 0
         }).then((answer) => {
             let val = answer.value!;
+            console.log("Maybe we need to console loge here?")
             if ( typeof(val) === "number" ) {
                 let choice = val as number;
                 switch (choice) {
