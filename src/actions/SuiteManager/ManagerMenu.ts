@@ -27,7 +27,7 @@ export default class ManagerMenu {
             let choice = val as number;
             switch (choice) {
                 default: {
-                    return Promise.resolve(new TerminalFlow<any>(FlowDirection.PREVIOUS));
+                    return Promise.resolve(new TerminalFlow<number>(FlowDirection.PREVIOUS, val));
                 } break;
                 case 1: 
                 case 2: {

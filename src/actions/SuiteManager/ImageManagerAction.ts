@@ -11,6 +11,10 @@ import moment = require("moment");
 
 enum WorkType { HOTEl, SUITE };
 
+export class ActionResult {
+    public data:any;
+}
+
 export default class ImageManagerAction {
     private workingWith: WorkType       = WorkType.SUITE;
     private workingWithString: string   = "";
@@ -28,7 +32,7 @@ export default class ImageManagerAction {
         }
     }
 
-    public Resolve(): Promise<TerminalFlow<boolean>>{
+    public Resolve(): Promise<TerminalFlow<ActionResult>>{
         Util.vorpal.log(`Working with: ${Util.printValue(this.workingWithString)}`);
         Util.vorpal.log(`${this.workingWithString} Description: ${Util.printValue(this.workingItem.get("description"))}`);
         Util.vorpal.log(`${this.workingWithString} Image Number: ${Util.printValue(this.workingItem.get("images").length)}`);
@@ -55,30 +59,29 @@ export default class ImageManagerAction {
             default: 0
         }).then((answer) => {
             let val = answer.value!;
-            console.log("Maybe we need to console loge here?")
             if ( typeof(val) === "number" ) {
                 let choice = val as number;
                 switch (choice) {
                     case 1: {
-                        return this.removeAllImages().then((result) => { return this.Resolve(); })
+                        return this.removeAllImages()
                     } break;
                     case 2: {
-                        return this.addNewImage().then((result) => { return this.Resolve(); })
+                        return this.addNewImage()
                     } break;
                     case 3: {
                         return this.commitChanges();
                     } break;
                     default: {
-                        return Promise.resolve(new TerminalFlow<boolean>(FlowDirection.PREVIOUS, false));
+                        return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
                     } break;
                 }
             } else {
-                return Promise.resolve(new TerminalFlow<boolean>(FlowDirection.PREVIOUS, false));
+                return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
             }
         });
     }
 
-    private removeAllImages(): Promise<TerminalFlow<boolean>> {
+    private removeAllImages(): Promise<TerminalFlow<ActionResult>> {
         Util.vorpal.log(`Removing All Image`);
         switch (this.workingWith) {
             case WorkType.SUITE: {
@@ -97,10 +100,10 @@ export default class ImageManagerAction {
             } break
         }
         Util.vorpal.log(`Done`);
-        return Promise.resolve(new TerminalFlow<boolean>(FlowDirection.NEXT, true));
+        return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
     }
 
-    private addNewImage(): Promise<TerminalFlow<boolean>> {
+    private addNewImage(): Promise<TerminalFlow<ActionResult>> {
         Util.vorpal.log(`Add new image`);
         return this.AskNewURL()
         .then((flow) => {
@@ -128,11 +131,11 @@ export default class ImageManagerAction {
                 } break
             }            
             Util.vorpal.log(`Done`);
-            return Promise.resolve(new TerminalFlow<boolean>(FlowDirection.NEXT, true));
-        }).then()
+            return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
+        })
     }
 
-    private commitChanges(): Promise<TerminalFlow<boolean>> {
+    private commitChanges(): Promise<TerminalFlow<ActionResult>> {
         Util.vorpal.log(`Saving changes`);
         Util.spinner.start();
         return new Promise<boolean>((resolve, reject) => {
@@ -152,7 +155,7 @@ export default class ImageManagerAction {
             }
             Util.spinner.stop();
             Util.vorpal.log(`Done`);           
-            return Promise.resolve(new TerminalFlow<boolean>(FlowDirection.NEXT, true));
+            return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
         })
     }
 

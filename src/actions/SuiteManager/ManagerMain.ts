@@ -65,7 +65,7 @@ export default class ManagerMain {
                 case FlowDirection.NEXT: {
                     this.HotelResolver = new SelectHotel();
                     this.HotelResolver.resolvedHotel = Resolver.resolvedHotel;
-                    this.SelectHotel(true);
+                    return this.SelectHotel(true);
                 } break;
                 case FlowDirection.PREVIOUS: {
                     return this.SelectMenu();
