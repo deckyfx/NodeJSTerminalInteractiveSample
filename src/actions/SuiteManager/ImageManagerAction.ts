@@ -163,10 +163,20 @@ export default class ImageManagerAction {
         Util.vorpal.log(`Saving changes`);
         Util.spinner.start();
         return new Promise<boolean>((resolve, reject) => {
+            let suites: SabreSuite[] = this.hotel.get("suites");
+            for (let i = 0; i < suites.length; i++) {
+                let changeslog: DescriptionChangeLog[] = suites[i].get("changes_log");
+                if (changeslog) {
+                    for (let n = 0; n < changeslog.length; n++) {
+                        changeslog[n].verified = true;
+                    }
+                    suites[i].set("changes_log", changeslog);
+                }
+            }
             this.hotel!.update({
                 $set: { 
                     images: this.hotel.get("images"),
-                    suites: this.hotel.get("suites") 
+                    suites: suites
                 }
             }, (e) => {
                 if (e) return resolve(false);
