@@ -50,6 +50,7 @@ export class DescriptionChangeLog {
     public newvalue?: string;
     public write_by?: string;
     public target_object_id?: string;
+    public verified?: boolean;
 }
 
 export class SabreSuiteSchema {
@@ -75,6 +76,7 @@ export class SabreSuiteSchema {
         newvalue: String,
         write_by: String,
         target_object_id: String,
+        verified: Boolean,
     };
     public static SCHEMA: any = {
         IATA: String,

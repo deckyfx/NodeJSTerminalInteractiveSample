@@ -1,5 +1,5 @@
 import SabreHotel from "../../models/SabreHotel";
-import SabreSuite from "../../models/SabreSuite";
+import SabreSuite, { DescriptionChangeLog } from "../../models/SabreSuite";
 import Util from "../../Util";
 import { InquirerInputAnswer, InquirerSelectSabreImageAnswer } from "../../repositories/hotelrepository/InquirerAnswer";
 import SabreImage from "../../models/SabreImage";
@@ -8,6 +8,7 @@ import _ = require("lodash");
 import TerminalFlow from "./TerminalFlow";
 import FlowDirection from "./FlowDirection";
 import moment = require("moment");
+import ChangeLogsViewer from "./ChangeLogsViewer";
 
 enum WorkType { HOTEl, SUITE };
 
@@ -40,7 +41,25 @@ export default class ImageManagerAction {
         choices.push(new InquirerSelectSabreImageAnswer(`Return to previous screen`, 0));
         choices.push(new InquirerSelectSabreImageAnswer("Remove all images", 1));
         choices.push(new InquirerSelectSabreImageAnswer("Add images", 2));
-        choices.push(new InquirerSelectSabreImageAnswer("Commit changes", 3));
+        let commit_menu = "Commit changes";
+        if (this.workingWith == WorkType.SUITE) {
+            const suite: SabreSuite = this.workingItem as SabreSuite;
+            let changelogs = suite.changes_log;
+            if (changelogs) {
+                let havechange: boolean = false;
+                for (let changelog of suite.changes_log!) {
+                    if (!changelog.verified) {
+                        havechange = true;
+                        break;
+                    }
+                }
+                if (havechange) {
+                    choices.push(new InquirerSelectSabreImageAnswer("View Changes Log", 4));
+                    commit_menu = "Commit changes (will verify all changes log)"
+                }
+            }
+        }
+        choices.push(new InquirerSelectSabreImageAnswer(commit_menu, 3));
         choices.push(new Util.inquirer.Separator());
         let images = this.workingItem.get("images") as Array<SabreImage>;
         choices = _.concat(choices, _.map(images, (image) => {
@@ -70,6 +89,11 @@ export default class ImageManagerAction {
                     } break;
                     case 3: {
                         return this.commitChanges();
+                    } break;
+                    case 4: {
+                        const suite: SabreSuite = this.workingItem as SabreSuite;
+                        let ChangeLogVIEWER = new ChangeLogsViewer(suite.changes_log!);
+                        return ChangeLogVIEWER.Resolve();
                     } break;
                     default: {
                         return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.PREVIOUS, new ActionResult()));

@@ -253,6 +253,7 @@ export default class SaveHotelToMongo {
             log.set("oldvalue", value1);
             log.set("newvalue", value2);
             log.set("write_by", "Bots");
+            log.set("verified", false);
         }
         return log;
     }

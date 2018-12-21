@@ -12,8 +12,9 @@ export default class ManagerMenu {
     private SelectMenu(): Promise<TerminalFlow<number>> {
         let choices: Array<any> = new Array<any>();
         choices.push(new InquirerIndexedAnswer("Exit", 0));
-        choices.push(new InquirerIndexedAnswer("Scan hotel and suites for empty images", 1));
-        choices.push(new InquirerIndexedAnswer("Manage hotel and suite images manually", 2));
+        choices.push(new InquirerIndexedAnswer("Scan hotel which contains suites with empty images", 1));
+        choices.push(new InquirerIndexedAnswer("Scan hotel which its suites are recently changed", 2));
+        choices.push(new InquirerIndexedAnswer("Manage hotel and suite images manually", 3));
         choices.push(new Util.inquirer.Separator());
         return Util.prompt<InquirerIndexedAnswer>({
             type: 'list',
@@ -30,7 +31,8 @@ export default class ManagerMenu {
                     return Promise.resolve(new TerminalFlow<number>(FlowDirection.PREVIOUS, val));
                 } break;
                 case 1: 
-                case 2: {
+                case 2:
+                case 3: {
                     return Promise.resolve(new TerminalFlow<number>(FlowDirection.NEXT, val!));
                 } break;
             }

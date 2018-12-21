@@ -4,8 +4,9 @@ import SabreCity from "../../models/SabreCity";
 import Util from "../../Util";
 import Task from "../../models/Task";
 import * as _ from "lodash";
-import SabreSuite from "../../models/SabreSuite";
+import SabreSuite, { DescriptionChangeLog } from "../../models/SabreSuite";
 import SabreImage from "../../models/SabreImage";
+import moment = require("moment");
 
 abstract class InquirerAnswerBase<T> {
     public constructor(public name?: string, public value?: T) {
@@ -114,6 +115,19 @@ export class InquirerSelectSabreImageAnswer extends InquirerAnswerBase<SabreImag
             if (value) {
                 let image = value! as SabreImage;
                 this.name = `${image.get("filename")}`;
+            }
+        }
+    }
+}
+
+export class InquirerSelectChangeLogAnswer extends InquirerAnswerBase<DescriptionChangeLog | number> {
+    public constructor(public name?: string, public value?: DescriptionChangeLog | number) {
+        super(name, value);
+        if (typeof(value!) === "number" ) {
+        } else {
+            if (value) {
+                let log = value! as DescriptionChangeLog;
+                this.name = `${moment(log.date).format('LLLL')} - ${log.label}`;
             }
         }
     }

@@ -1,13 +1,13 @@
-import SabreHotel from "../../models/SabreHotel";
-import TerminalFlow from "./TerminalFlow";
-import SabreSuite from "../../models/SabreSuite";
-import FlowDirection from "./FlowDirection";
-import { InquirerSelectHotelAnswer, InquirerSelectSuiteAnswer } from "../../repositories/hotelrepository/InquirerAnswer";
-import Util from "../../Util";
+import SabreHotel from "../../../models/SabreHotel";
+import TerminalFlow from "./../TerminalFlow";
+import SabreSuite from "../../../models/SabreSuite";
+import FlowDirection from "./../FlowDirection";
+import { InquirerSelectHotelAnswer, InquirerSelectSuiteAnswer } from "../../../repositories/hotelrepository/InquirerAnswer";
+import Util from "../../../Util";
 import _ = require("lodash");
 
 export default class SelectSuite {
-    constructor(public hotel: SabreHotel, private stripSuiteThatHasImage?: boolean) {
+    constructor(public hotel: SabreHotel) {
     }
 
     public Resolve(): Promise<TerminalFlow<SabreSuite>> {
@@ -31,12 +31,7 @@ export default class SelectSuite {
         choices.push(new InquirerSelectHotelAnswer("Working with this Hotel", -1));
         choices.push(new Util.inquirer.Separator());
         let suites: SabreSuite[] = this.hotel.get("suites");
-        let i = 0;
-        if (this.stripSuiteThatHasImage) {
-            suites = _.filter(suites, (suite) => {
-                return suite.get("images").length == 0;
-            })
-        }
+        let i = 0;        
         choices = _.concat(choices, _.map(suites, (suite) => {
             i++
             return new InquirerSelectSuiteAnswer("", suite, i - 1);

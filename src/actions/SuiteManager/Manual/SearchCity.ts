@@ -1,14 +1,14 @@
-import TerminalFlow from "./TerminalFlow";
-import FlowDirection from "./FlowDirection";
-import Util from "../../Util";
-import { InquirerInputAnswer, InquirerSelectCityAnswer, InquirerSelectMongoCityAnswer } from "../../repositories/hotelrepository/InquirerAnswer";
-import LocationRepository from "../../repositories/LocationRepository";
-import PortCity from "../../models/PortCity";
-import mongo, { MongoDB } from "../../MongoDB";
-import SabreCity from "../../models/SabreCity";
+import SabreCity from "../../../models/SabreCity";
+import TerminalFlow from "../TerminalFlow";
+import mongo, { MongoDB } from "../../../MongoDB";
+import Util from "../../../Util";
+import { InquirerInputAnswer, InquirerSelectCityAnswer, InquirerSelectMongoCityAnswer } from "../../../repositories/hotelrepository/InquirerAnswer";
+import FlowDirection from "../FlowDirection";
 import _ = require("lodash");
+import LocationRepository from "../../../repositories/LocationRepository";
+import PortCity from "../../../models/PortCity";
 
-export default class SelectCity {
+export default class SearchCity {
     public Resolve(): Promise<TerminalFlow<SabreCity>> {
         return this.AskCityTerm()
         .then((flow) => {

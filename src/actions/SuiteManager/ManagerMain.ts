@@ -1,21 +1,22 @@
-import SelectCity from "./SelectCity";
-import FlowDirection from "./FlowDirection";
-import SelectHotel from "./SelectHotel";
-import TerminalFlow from "./TerminalFlow";
+
 import SabreHotel from "../../models/SabreHotel";
-import SabreCity from "../../models/SabreCity";
-import SelectSuite from "./SelectSuite";
 import SabreSuite from "../../models/SabreSuite";
+
 import ImageManagerAction from "./ImageManagerAction";
+import FlowDirection from "./FlowDirection";
+import TerminalFlow from "./TerminalFlow";
 import ManagerMenu from "./ManagerMenu";
-import EmptyImagesScanner from "./EmptyImagesScanner";
+
+import HotelAndSuiteResolver from "./HotelAndSuiteResolver";
+import Manual from "./Manual/Manual";
+import EmptyImages from "./EmptyImages/EmptyImages";
+import RecentlyChanged from "./RecentlyChanged/RecentlyChanged";
 
 export default class ManagerMain {
-    private city: SabreCity | undefined;
-    private hotel: SabreHotel | undefined;
-    private suite: SabreSuite | undefined;
-    private HotelResolver: SelectHotel | undefined;
-    private scanMode:boolean = false;
+
+    private SuiteAndHotelResolver?: HotelAndSuiteResolver;
+    private hotel?: SabreHotel;
+    private suite?: SabreSuite;
 
     public Resolve(): Promise<boolean> {
         return this.SelectMenu()
@@ -38,94 +39,37 @@ export default class ManagerMain {
         .then((flow) => {
             switch (flow.direction) {
                 case FlowDirection.NEXT: {
-                    switch(flow.data!) {
+                    switch (flow.data!) {
                         case 1: {
-                            this.scanMode = true;
-                            return this.ScanHotels();
+                            this.SuiteAndHotelResolver = new EmptyImages();
                         } break;
                         case 2: {
-                            this.scanMode = false;
-                            return this.SelectCity();
+                            this.SuiteAndHotelResolver = new RecentlyChanged();
+                        } break;
+                        case 3: {
+                            this.SuiteAndHotelResolver = new Manual();
+                        } break;
+                        default : {
+                            return Promise.reject("Unhandled flow");
                         } break;
                     }
+                    return this.SuiteAndHotelResolver!.Resolve()
+                    .then((flow) => {
+                        switch (flow.direction) {
+                            case FlowDirection.NEXT: {
+                                this.hotel = flow.data!.hotel;
+                                this.suite = flow.data!.suite;
+                                return this.SelectAction();
+                            } break;
+                            case FlowDirection.PREVIOUS: {
+                                return this.SelectMenu();
+                            };
+                        }
+                        return Promise.reject("Unhandled flow");
+                    });
                 } break;
                 case FlowDirection.PREVIOUS: {
                     return Promise.resolve(new TerminalFlow<any>(FlowDirection.PREVIOUS));
-                };
-            }
-            return Promise.reject("Unhandled flow");
-        });
-    }
-
-    private ScanHotels(): Promise<TerminalFlow<any>>{
-        let Resolver = new EmptyImagesScanner();
-        return Resolver.Resolve()
-        .then((flow) => {
-            switch (flow.direction) {
-                case FlowDirection.NEXT: {
-                    this.HotelResolver = new SelectHotel();
-                    this.HotelResolver.resolvedHotel = Resolver.resolvedHotel;
-                    return this.SelectHotel(true);
-                } break;
-                case FlowDirection.PREVIOUS: {
-                    return this.SelectMenu();
-                };
-            }
-            return Promise.reject("Unhandled flow");
-        });
-    }
-
-    private SelectCity(): Promise<TerminalFlow<any>>{
-        let Resolver = new SelectCity();
-        return Resolver.Resolve()
-        .then((flow) => {
-            switch (flow.direction) {
-                case FlowDirection.NEXT: {
-                    this.city = flow.data!
-                    return this.SelectHotel();
-                } break;
-                case FlowDirection.PREVIOUS: {
-                    return this.SelectMenu();
-                };
-            }
-            return Promise.reject("Unhandled flow");
-        });
-    }
-
-    private SelectHotel(usecache?: boolean): Promise<TerminalFlow<any>>{
-        if (!usecache) {
-            this.HotelResolver = new SelectHotel(this.city!, this.scanMode);
-        }
-        return this.HotelResolver!.Resolve()
-        .then((flow) => {
-            switch (flow.direction) {
-                case FlowDirection.NEXT: {
-                    this.hotel = flow.data!
-                    return this.SelectSuite();
-                } break;
-                case FlowDirection.PREVIOUS: {
-                    if (this.scanMode) {
-                        return this.SelectMenu();
-                    } else {
-                        return this.SelectCity();
-                    }
-                };
-            }
-            return Promise.reject("Unhandled flow");
-        });
-    }
-
-    private SelectSuite(): Promise<TerminalFlow<any>>{
-        let Resolver = new SelectSuite(this.hotel!, this.scanMode);
-        return Resolver.Resolve()
-        .then((flow) => {
-            switch (flow.direction) {
-                case FlowDirection.NEXT: {
-                    this.suite = flow.data!
-                    return this.SelectAction();
-                } break;
-                case FlowDirection.PREVIOUS: {
-                    return this.SelectHotel(true);
                 };
             }
             return Promise.reject("Unhandled flow");
@@ -141,7 +85,20 @@ export default class ManagerMain {
                     return this.SelectAction();
                 } break;
                 case FlowDirection.PREVIOUS: {
-                    return this.SelectSuite();
+                    return this.SuiteAndHotelResolver!.OnBackSignal()
+                    .then((flow) => {
+                        switch (flow.direction) {
+                            case FlowDirection.NEXT: {
+                                this.hotel = flow.data!.hotel;
+                                this.suite = flow.data!.suite;
+                                return this.SelectAction();
+                            } break;
+                            case FlowDirection.PREVIOUS: {
+                                return this.SelectMenu();
+                            };
+                        }
+                        return Promise.reject("Unhandled flow");
+                    });
                 };
             }
             return Promise.reject("Unhandled flow");

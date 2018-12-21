@@ -1,7 +1,7 @@
 import Util from "../Util";
 import ActionBase from "./ActionBase";
 import _ = require("lodash");
-import SelectCity from "./SuiteManager/SelectCity";
+import SelectCity from "./SuiteManager/Manual/Manual";
 import ManagerMain from "./SuiteManager/ManagerMain";
 
 export default class SuiteManager extends ActionBase {

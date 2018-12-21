@@ -1,16 +1,14 @@
-import SabreHotel from "../../models/SabreHotel";
-import SabreCity from "../../models/SabreCity";
-import TerminalFlow from "./TerminalFlow";
-import mongo, { MongoDB } from "../../MongoDB";
-import Util from "../../Util";
-import { InquirerSelectHotelAnswer } from "../../repositories/hotelrepository/InquirerAnswer";
-import FlowDirection from "./FlowDirection";
+import SabreHotel from "../../../models/SabreHotel";
+import SabreCity from "../../../models/SabreCity";
+import TerminalFlow from "../TerminalFlow";
+import mongo, { MongoDB } from "../../../MongoDB";
+import Util from "../../../Util";
+import { InquirerSelectHotelAnswer } from "../../../repositories/hotelrepository/InquirerAnswer";
+import FlowDirection from "../FlowDirection";
 import _ = require("lodash");
 
-export default class SelectHotel {
-    public resolvedHotel: Array<SabreHotel> = [];
-    
-    constructor(public city?: SabreCity, private stripSuiteThatHasImage?: boolean) {
+export default class SelectHotel {    
+    constructor(public city?: SabreCity) {
     }
 
     public Resolve(): Promise<TerminalFlow<SabreHotel>> {
@@ -31,28 +29,15 @@ export default class SelectHotel {
     private selectHotel(): Promise<TerminalFlow<SabreHotel>> {
         return mongo.connect()
         .then((mongo: MongoDB) => {
-            if (this.resolvedHotel.length == 0) {
-                Util.vorpal.log(`Search hotels in city "${Util.printValue(this.city!.get("_id"))}"...`);
-                Util.spinner.start();
-                return new Promise<SabreHotel[]>((resolve, reject) => {
-                    let searchcondition: any = { $and: [ { city: new RegExp(this.city!.get("_id"), "i") }, { sabreID: { $exists: true } } ] };
-                    if (this.stripSuiteThatHasImage) {
-                        searchcondition = { $and: [ 
-                            { city: new RegExp(this.city!.get("_id"), "i") }, 
-                            { sabreID: { $exists: true } },
-                            { suites: { $elemMatch : { $and : [ { images : { $size : 0 } } , { sabreID : { $exists : true } } ] } } }
-                        ] }
-                    }
-                    mongo.models.SabreHotel!.find(searchcondition, (e, docs) => {
-                        if (e) return resolve([]);
-                        this.resolvedHotel = docs;
-                        return resolve(docs);
-                    })
+            Util.vorpal.log(`Search hotels in city "${Util.printValue(this.city!.get("_id"))}"...`);
+            Util.spinner.start();
+            return new Promise<SabreHotel[]>((resolve, reject) => {
+                let searchcondition: any = { $and: [ { city: new RegExp(this.city!.get("_id"), "i") }, { sabreID: { $exists: true } } ] };
+                mongo.models.SabreHotel!.find(searchcondition, (e, docs) => {
+                    if (e) return resolve([]);
+                    return resolve(docs);
                 })
-            } else {
-                Util.vorpal.log(`Using cached search hotels result`);
-                return Promise.resolve(this.resolvedHotel);
-            }
+            })
         })
         .then((hotels) => {
             Util.spinner.stop();
@@ -62,7 +47,7 @@ export default class SelectHotel {
             choices.push(new InquirerSelectHotelAnswer("Return to previous screen", -1));
             choices.push(new Util.inquirer.Separator());
             choices = _.concat(choices, _.map(hotels, (hotel) => {
-                return new InquirerSelectHotelAnswer("", hotel, true, this.stripSuiteThatHasImage);
+                return new InquirerSelectHotelAnswer("", hotel, true, true);
             }));
             choices.push(new Util.inquirer.Separator());
             return Util.prompt<InquirerSelectHotelAnswer>({
