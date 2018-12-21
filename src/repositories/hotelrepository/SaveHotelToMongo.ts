@@ -150,6 +150,9 @@ export default class SaveHotelToMongo {
                 oldsuite.set("is_available", true);
                 let changelogs: Array<DescriptionChangeLog> = oldsuite.get("changes_log") || [];
                 let watchpath: Array<string> = [
+                    "is_available",
+                    "is_deleted",
+                    "is_visible",
                     "description", 
                     "IATA", 
                     "name", 
