@@ -168,6 +168,7 @@ export default class SaveHotelToMongo {
                     "taxes.surcharges",
                     "taxes.taxes"
                 ];
+                let currenttime = moment(moment.now()).toDate();
                 changelogs = _.concat(changelogs, _.filter(_.map(
                     watchpath, 
                     (keypath) => {
