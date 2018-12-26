@@ -55,7 +55,7 @@ export default class TaskHistory extends ActionBase {
     private WhatToDo(): Promise<boolean> {
         HotelSearchCache.reload();
         let choices: Array<any> = new Array<any>();
-        Util.vorpal.log(`${Util.printInfo()} Keep ${Util.printValue(HotelSearchCache.length)} task histories`);
+        Util.vorpal.log(`${Util.printInfo()} Keep ${Util.printValue(HotelSearchCache.length)} local task histories`);
         if (HotelSearchCache.length > 0) {
             choices.push(new InquirerIndexedAnswer("Load tasks from monggo hotels", 0));
             choices.push(new InquirerIndexedAnswer("Show all local Tasks", 1));

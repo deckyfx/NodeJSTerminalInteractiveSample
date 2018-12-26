@@ -25,10 +25,10 @@ export default class SelectHotel {
                 //}];
                 //mongo.models.Hotel!.aggregate(search_condition, (e : any, docs : any) => {
                 let search_condition = { $and: [ 
-                    { suites : { $elemMatch : { $and : [ { verified : { $neq: true } } , { sabreID : { $exists : true } } ] } } }, 
+                    { suites : { $elemMatch : { $and : [ { verified : { $ne: true } } , { verified : { $exists: true } } , { sabreID : { $exists : true } } ] } } }, 
                     { sabreID : { $exists : true } } 
                 ] };
-                mongo.models.Hotel!.find(search_condition, (e, docs) => {
+                mongo.models.SabreHotel!.find(search_condition, (e, docs) => {
                     if (e) return resolve([]);
                     return resolve(docs);
                 })

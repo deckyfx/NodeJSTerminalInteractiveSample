@@ -21,7 +21,7 @@ export default class SelectHotel {
                     { suites : { $elemMatch : { $and : [ { images : { $size: 0 } } , { sabreID : { $exists : true } } ] } } }, 
                     { sabreID : { $exists : true } } 
                 ] }, { images : { $size: 0 } } ] };
-                mongo.models.Hotel!.find(search_condition, (e, docs) => {
+                mongo.models.SabreHotel!.find(search_condition, (e, docs) => {
                     if (e) return resolve([]);
                     return resolve(docs);
                 })
