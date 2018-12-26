@@ -14,17 +14,30 @@ export default class SaveHotelToMongo {
     }
 
     public SaveHotel(task: Task): Promise<Task> {
-        return Promise.resolve(true)
-        .then(() => {
-            return this.LookupSavedHotelInCache(task)
-            .then((cache) => {
-                if (cache) {
-                    return Promise.resolve(cache)
-                } else {
-                    return Promise.resolve(task)
-                }
-            })
+        return new Promise<Task>((resolve, reject) => {
+            if (task.isTaskFromMonggo()) {
+                resolve(task);
+            } else {
+                Promise.resolve(true)
+                .then(() => {
+                    return this.LookupSavedHotelInCache(task)
+                    .then((cache) => {
+                        if (cache) {
+                            return Promise.resolve(cache)
+                        } else {
+                            return Promise.resolve(task)
+                        }
+                    })
+                })
+                .then((task) => {
+                    resolve(task);
+                })
+                .catch((e) => {
+                    reject(e);
+                })
+            }
         })
+
         .then((task) => {
             return this.SaveOrUpdateHotel(task);
         });

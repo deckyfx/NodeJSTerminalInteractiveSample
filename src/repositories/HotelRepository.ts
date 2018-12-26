@@ -28,27 +28,60 @@ export default class HotelRepository extends SessionRepository {
         .then((task) => {
             // if task should run
             if (task) {
-                return (new CityLookup()).LookupCity(task)
-                .then((task) => {
-                    return SessionRepository.createSession()
-                    .then(() => {
-                        return (new HotelLookup()).LookupHotel(task)
+                return new Promise<Task>((resolve, reject) => {
+                    if (task.isTaskFromMonggo()) {
+                        SessionRepository.createSession()
                         .then(() => {
-                            return SessionRepository.closeSession().
-                            then(() => {
-                                return Promise.resolve(task);
+                            return (new HotelLookup()).LookupHotel(task)
+                            .then(() => {
+                                return SessionRepository.closeSession().
+                                then(() => {
+                                    return Promise.resolve(task);
+                                });
+                            })
+                            .catch((e) => {                            
+                                return SessionRepository.closeSession().
+                                then(() => {
+                                    throw e;
+                                });
                             });
                         })
-                        .catch((e) => {                            
-                            return SessionRepository.closeSession().
-                            then(() => {
-                                throw e;
+                        .then((task) => {
+                            resolve(task);
+                        })
+                        .catch((e) => {
+                            reject(e);
+                        })
+                    } else {
+                        (new CityLookup()).LookupCity(task)
+                        .then((task) => {
+                            return SessionRepository.createSession()
+                            .then(() => {
+                                return (new HotelLookup()).LookupHotel(task)
+                                .then(() => {
+                                    return SessionRepository.closeSession().
+                                    then(() => {
+                                        return Promise.resolve(task);
+                                    });
+                                })
+                                .catch((e) => {                            
+                                    return SessionRepository.closeSession().
+                                    then(() => {
+                                        throw e;
+                                    });
+                                });
                             });
-                        });
-                    });
-                })
-                .then((task) => {
-                    return (new MongoCityLookup()).LookupMongoCity(task);
+                        })
+                        .then((task) => {
+                            return (new MongoCityLookup()).LookupMongoCity(task);
+                        })
+                        .then((task) => {
+                            resolve(task);
+                        })
+                        .catch((e) => {
+                            reject(e);
+                        })
+                    }
                 })
                 .then((task) => {
                     return (new SaveHotelToMongo()).SaveHotel(task);

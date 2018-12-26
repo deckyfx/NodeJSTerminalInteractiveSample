@@ -3,6 +3,8 @@ import * as mongoose from "mongoose";
 import { SabreSuiteSchema } from "./SabreSuite";
 
 export default interface SabreHotel extends Document {
+    city: string;
+    sabreID: string;
     enabled?: boolean;
     sabreName?: string;
     sabreChainName?: string;
@@ -12,6 +14,8 @@ export default interface SabreHotel extends Document {
 export class SabreHotelSchema {   
     public static SCHEMA: any = {
         _id: mongoose.SchemaTypes.ObjectId,
+        city: String,
+        sabreID: String,
         enabled: Boolean,
         sabreName: String,
         sabreChainName: String,

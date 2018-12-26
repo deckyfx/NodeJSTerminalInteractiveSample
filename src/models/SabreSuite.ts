@@ -79,7 +79,7 @@ export class SabreSuiteSchema {
         write_by: String,
         target_object_id: String,
         verified: Boolean,
-        verivied_at: Date;
+        verivied_at: Date,
     };
     public static SCHEMA: any = {
         IATA: String,

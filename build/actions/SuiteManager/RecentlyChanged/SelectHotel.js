@@ -17,10 +17,16 @@ class SelectHotel {
             Util_1.default.spinner.start();
             return new Promise((resolve, reject) => {
                 // search where suites recently changed
-                let search_condition = { $or: [{ $and: [
-                                { suites: { $elemMatch: { $and: [{ images: { $size: 0 } }, { sabreID: { $exists: true } }] } } },
-                                { sabreID: { $exists: true } }
-                            ] }, { images: { $size: 0 } }] };
+                //let search_condition = [{$unwind: '$suites'}, { $unwind: "$suites.changes_log" }, {
+                //    $match: {
+                //        "suites.changes_log.verified": { $ne: true }
+                //    }
+                //}];
+                //mongo.models.Hotel!.aggregate(search_condition, (e : any, docs : any) => {
+                let search_condition = { $and: [
+                        { suites: { $elemMatch: { $and: [{ verified: { $neq: true } }, { sabreID: { $exists: true } }] } } },
+                        { sabreID: { $exists: true } }
+                    ] };
                 mongo.models.Hotel.find(search_condition, (e, docs) => {
                     if (e)
                         return resolve([]);

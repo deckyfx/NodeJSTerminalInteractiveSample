@@ -14,24 +14,38 @@ export default class HotelLookup {
     public constructor() {
     }
 
-    public LookupHotel(task: Task, ask?: boolean): Promise<Task> {        
+    public LookupHotel(task: Task, ask?: boolean): Promise<Task> {   
         return new Promise<Task>((resolve, reject) => {
-            if (task.hotelTermsEmpty() || ask) {
-                resolve(this.AskHotelTerm(task));
-            } else {
+            if (task.isTaskFromMonggo()) {
                 resolve(task);
+            } else {
+                Promise.resolve()
+                .then(() => {
+                    if (task.hotelTermsEmpty() || ask) {
+                        return Promise.resolve(this.AskHotelTerm(task));
+                    } else {
+                        return Promise.resolve(task);
+                    }
+                })
+                .then((task) => {
+                    return this.LookupHotelInCache(task)
+                    .then((cache) => {
+                        if (!cache) {
+                            return this.LookupHotelOnline(task)
+                        } else {
+                            return Promise.resolve(cache)
+                        }
+                    });
+                })
+                .then((task) => {
+                    resolve(task);
+                })
+                .catch((e) => {
+                    reject(e);
+                })
             }
         })
-        .then((task) => {
-            return this.LookupHotelInCache(task)
-            .then((cache) => {
-                if (!cache) {
-                    return this.LookupHotelOnline(task)
-                } else {
-                    return Promise.resolve(cache)
-                }
-            });
-        })
+        
         .then((task) => {
             return this.GetHotelDetail(task);
         })

@@ -10,11 +10,13 @@ import * as fs from "fs";
 import SabreCity from "../models/SabreCity";
 import PortCity from "../models/PortCity";
 import SabreHotel from "../models/SabreHotel";
+import mongo, { MongoDB } from "../MongoDB";
 
 export default class TaskHistory extends ActionBase {
     static buildAutoComplete: any;
     
     public HotelRepository: HotelRepository = new HotelRepository();
+    private mongoHotelTasks: Array<Task> = [];
 
     static build(args: any, next: Function): void {
         try {
@@ -55,9 +57,10 @@ export default class TaskHistory extends ActionBase {
         let choices: Array<any> = new Array<any>();
         Util.vorpal.log(`${Util.printInfo()} Keep ${Util.printValue(HotelSearchCache.length)} task histories`);
         if (HotelSearchCache.length > 0) {
-            choices.push(new InquirerIndexedAnswer("Show all Tasks", 0));
-            choices.push(new InquirerIndexedAnswer("Show success tasks", 1));
-            choices.push(new InquirerIndexedAnswer("Show failed tasks", 2));
+            choices.push(new InquirerIndexedAnswer("Load tasks from monggo hotels", 0));
+            choices.push(new InquirerIndexedAnswer("Show all local Tasks", 1));
+            choices.push(new InquirerIndexedAnswer("Show success local tasks", 2));
+            choices.push(new InquirerIndexedAnswer("Show failed local tasks", 3));
             choices.push(new InquirerIndexedAnswer(`Exit`, 3));
             return Util.prompt<InquirerIndexedAnswer>({
                 type: 'list',
@@ -72,7 +75,8 @@ export default class TaskHistory extends ActionBase {
                     switch (choice) {
                         case 0:
                         case 1:
-                        case 2: {
+                        case 2:
+                        case 3: {
                             return this.SelectSelectionMode(choice)
                             .then((tasks) => {
                                 if (tasks.length > 0) {
@@ -97,7 +101,7 @@ export default class TaskHistory extends ActionBase {
 
     private SelectSelectionMode(prevmode: number): Promise<Array<Task>> {
         let choices: Array<any> = new Array<any>();
-        choices.push(new InquirerIndexedAnswer("Select all",       0));
+        choices.push(new InquirerIndexedAnswer("Select all",        0));
         choices.push(new InquirerIndexedAnswer("Default mode",      1));
         choices.push(new InquirerIndexedAnswer("Free search mode",  2));
         return Util.prompt<InquirerIndexedAnswer>({
@@ -112,8 +116,18 @@ export default class TaskHistory extends ActionBase {
                 let choice = val as number;
                 switch (choice) {
                     default: {
-                        return this.SelectTasks(prevmode, choice);
-                    } break;
+                        switch (prevmode) {
+                            case 0: {
+                                return this.LoadTasksFromMongo()
+                                .then(() => {
+                                    return this.SelectTasks(prevmode, choice);
+                                })
+                            };
+                            default: {
+                                return this.SelectTasks(prevmode, choice);
+                            }
+                        }
+                    };
                 }
             } else {
                 return Promise.reject(new Error('Invalid action'));
@@ -121,18 +135,46 @@ export default class TaskHistory extends ActionBase {
         });
     }
 
+    private LoadTasksFromMongo(): Promise<void> {
+        return mongo.connect()
+        .then((mongo: MongoDB) => {
+            Util.vorpal.log(`Searching tasks from mongo DB`);
+            Util.spinner.start();
+            return new Promise<SabreHotel[]>((resolve, reject) => {
+                let search_condition = { $and: [ { sabreID : { $exists : true } }, { sabreName : { $exists : true } }, { city : { $exists : true } } ] };
+                mongo.models.Hotel!.find(search_condition, (e, docs) => {
+                    if (e) return resolve([]);
+                    return resolve(docs);
+                })
+            })
+        })
+        .then((hotels)=> {
+            Util.spinner.stop();
+            Util.vorpal.log(`Found ${Util.printValue(hotels.length)} hotels...`);
+            this.mongoHotelTasks = _.map(hotels, (hotel) => {
+                let task = new Task({}, null, "");
+                task = task.reset();
+                task.setTaskFromMongo(hotel);
+                return task;
+            });
+        });
+    }
+
     private SelectTasks(mode: number, selectmode: number): Promise<Array<Task>> {
         let tasks: Array<Task> = new Array<Task>();
         switch (mode) {
             case 0: {
-                tasks = HotelSearchCache.models
+                tasks = this.mongoHotelTasks;
             } break;
             case 1: {
+                tasks = HotelSearchCache.models;
+            } break;
+            case 2: {
                 tasks = HotelSearchCache.models.filter((task) => {
                     return task.get("success");
                 });
             } break;
-            case 2: {
+            case 3: {
                 tasks = HotelSearchCache.models.filter((task) => {
                     return !task.get("success");
                 });
@@ -258,7 +300,7 @@ export default class TaskHistory extends ActionBase {
                 });
                 this.tasksSize = _tasks.length;
                 Util.vorpal.log(`Executing ${Util.printValue(this.tasksSize)} tasks`);
-                return Util.SequencePromises<Task, boolean>(_tasks, this.SearchHotelBridge.bind(this))
+                return Util.SequencePromises<Task, Task>(_tasks, this.SearchHotelBridge.bind(this))
                 .then((tasks) => {
                     return Promise.resolve(false);
                 });
@@ -272,7 +314,7 @@ export default class TaskHistory extends ActionBase {
                 });
                 this.tasksSize = _tasks.length;
                 Util.vorpal.log(`Executing ${Util.printValue(this.tasksSize)} tasks`);
-                return Util.SequencePromises<Task, boolean>(_tasks, this.SearchHotelBridge.bind(this))
+                return Util.SequencePromises<Task, Task>(_tasks, this.SearchHotelBridge.bind(this))
                 .then((tasks) => {
                     return Promise.resolve(false);
                 });

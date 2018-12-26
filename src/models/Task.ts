@@ -196,4 +196,29 @@ export default class Task extends Backbone.Model {
         this.set("searchcache", []);
         return this;
     }
+    
+    public setTaskFromMongo(hotel: SabreHotel): void {
+        this.sabreID = hotel.get("sabreID");
+        this.hotel = hotel;
+        this.mongoHotel = hotel;
+        this.success = true;
+        this.hotelterms = [hotel.get("sabreName")];
+        this.cityterms = [hotel.get("city").toUpperCase()];
+    }
+
+    public isTaskFromMonggo(): boolean {
+        let flag1: boolean  = false; 
+        let flag2: boolean = false; 
+        let flag3: boolean = false;
+        if (this.sabreID) {
+            flag1 = true;
+        }
+        if (this.hotel) {
+            flag2 = true;
+        }
+        if (this.mongoHotel) {
+            flag3 = true;
+        }
+        return flag1 && flag2 && flag3;
+    }
 }
