@@ -61,7 +61,7 @@ export default class TaskHistory extends ActionBase {
             choices.push(new InquirerIndexedAnswer("Show all local Tasks", 1));
             choices.push(new InquirerIndexedAnswer("Show success local tasks", 2));
             choices.push(new InquirerIndexedAnswer("Show failed local tasks", 3));
-            choices.push(new InquirerIndexedAnswer(`Exit`, 3));
+            choices.push(new InquirerIndexedAnswer(`Exit`, 4));
             return Util.prompt<InquirerIndexedAnswer>({
                 type: 'list',
                 name: 'value',

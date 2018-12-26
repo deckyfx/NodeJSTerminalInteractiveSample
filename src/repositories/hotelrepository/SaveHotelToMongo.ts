@@ -158,9 +158,7 @@ export default class SaveHotelToMongo {
                 }
             }) as SabreSuite;
             if (found) {
-                // should we overwrite old suite data with the new one?
-                // or what should we do?
-                oldsuite.set("is_available", true);
+                found.set("is_available", true);
                 let changelogs: Array<DescriptionChangeLog> = oldsuite.get("changes_log") || [];
                 let watchpath: Array<string> = [
                     "is_available",
@@ -185,7 +183,7 @@ export default class SaveHotelToMongo {
                 changelogs = _.concat(changelogs, _.filter(_.map(
                     watchpath, 
                     (keypath) => {
-                        return this.CreateSuiteChangeLog(keypath, oldsuite, found);
+                        return this.CompareAndCreateSuiteChangeLog(keypath, oldsuite, found);
                     }),
                     (log: DescriptionChangeLog) => {
                         if (log) {
@@ -197,9 +195,7 @@ export default class SaveHotelToMongo {
                         }
                         return false;
                     }) as Array<DescriptionChangeLog>
-                );
-                oldsuite.set("changes_log", changelogs);
-                
+                );                
                 _.forEach(watchpath, (keypath) => {
                     let value: any;
                     if (keypath.includes(".")) {
@@ -212,13 +208,27 @@ export default class SaveHotelToMongo {
                         value = found.get(keypath);
                         oldsuite.set(keypath, value);
                     }
-                    
-                })
+                });
+
+                oldsuite.set("changes_log", changelogs);
                 e += 1;
             } else {
                 oldsuite.set("is_available", false);
+                let changelogs: Array<DescriptionChangeLog> = oldsuite.get("changes_log") || [];
+                let log = this.CreateSuiteChangeLog("is_available", true, false);
+                if (log) {
+                    let currenttime = moment(moment.now()).toDate();
+                    oldsuite.set("updated_at",  currenttime);
+                    if (!log.verified) {
+                        oldsuite.set("verified",  false);
+                    }
+                    changelogs.push(log);
+                }
+
+                oldsuite.set("changes_log", changelogs);
                 d += 1;
             }
+
             let currenttime = moment(moment.now()).toDate();
             if (!oldsuite.get("created_at")) {
                 oldsuite.set("created_at", currenttime);
@@ -247,7 +257,7 @@ export default class SaveHotelToMongo {
         return result;
     }
 
-    private CreateSuiteChangeLog(keypath: string, oldsuite: SabreSuite, newsuite: SabreSuite): DescriptionChangeLog | null {
+    private CompareAndCreateSuiteChangeLog(keypath: string, oldsuite: SabreSuite, newsuite: SabreSuite): DescriptionChangeLog | null {
         let log: any;
         let value1: any;
         let value2: any;
@@ -260,17 +270,20 @@ export default class SaveHotelToMongo {
             value2 = newsuite.get(keypath);
         }
         if (value1 !== value2) {
-            // add changes_log,
-            // update updated_at
-            let currenttime = moment(moment.now()).toDate();
-            log = new mongo.models.DescriptionChangeLog!();
-            log.set("date",     currenttime);
-            log.set("label",    keypath);
-            log.set("oldvalue", value1);
-            log.set("newvalue", value2);
-            log.set("write_by", "Bots");
-            log.set("verified", false);
+            log = this.CreateSuiteChangeLog(keypath, value1, value2);
         }
+        return log;
+    }
+
+    private CreateSuiteChangeLog(keypath: string, value1: any, value2: any): DescriptionChangeLog {
+        let currenttime = moment(moment.now()).toDate();
+        let log = new mongo.models.DescriptionChangeLog!();
+        log.set("date",     currenttime);
+        log.set("label",    keypath);
+        log.set("oldvalue", value1);
+        log.set("newvalue", value2);
+        log.set("write_by", "Bots");
+        log.set("verified", false);
         return log;
     }
 

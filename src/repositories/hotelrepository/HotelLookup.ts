@@ -408,9 +408,7 @@ export default class HotelLookup {
                 let currenttime = moment(moment.now()).toDate();
                 result.set("changes_log", []);
                 result.set("created_at", currenttime);
-                // dont create updated_at and verivied_at
-                // result.set("updated_at", currenttime);
-                // result.set("verivied_at", currenttime);
+                result.set("verified", false);
             }
             // Sort by hotel rate
             results = _.sortBy(results, ["rate"], ["asc"]);
