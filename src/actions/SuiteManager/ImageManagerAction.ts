@@ -167,10 +167,14 @@ export default class ImageManagerAction {
             for (let i = 0; i < suites.length; i++) {
                 let changeslog: DescriptionChangeLog[] = suites[i].get("changes_log");
                 if (changeslog) {
+                    let currenttime = moment(moment.now()).toDate();
                     for (let n = 0; n < changeslog.length; n++) {
                         changeslog[n].verified = true;
+                        changeslog[n].verivied_at = currenttime;
                     }
                     suites[i].set("changes_log", changeslog);
+                    suites[i].set("verified", true);
+                    suites[i].set("verivied_at", currenttime);
                 }
             }
             this.hotel!.update({

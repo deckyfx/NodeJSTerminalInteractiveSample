@@ -177,6 +177,9 @@ export default class SaveHotelToMongo {
                     (log: DescriptionChangeLog) => {
                         if (log) {
                             oldsuite.set("updated_at",  currenttime);
+                            if (!log.verified) {
+                                oldsuite.set("verified",  false);
+                            }
                             return true;
                         }
                         return false;

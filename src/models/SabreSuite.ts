@@ -21,6 +21,7 @@ export default interface SabreSuite extends Document {
 
     updated_at?: Date;
     created_at?: Date;
+    verified?: boolean;
     verivied_at?: Date;
     changes_log?: Array<DescriptionChangeLog>;
 }
@@ -51,6 +52,7 @@ export class DescriptionChangeLog {
     public write_by?: string;
     public target_object_id?: string;
     public verified?: boolean;
+    public verivied_at?: Date;
 }
 
 export class SabreSuiteSchema {
@@ -77,6 +79,7 @@ export class SabreSuiteSchema {
         write_by: String,
         target_object_id: String,
         verified: Boolean,
+        verivied_at: Date;
     };
     public static SCHEMA: any = {
         IATA: String,
@@ -87,6 +90,7 @@ export class SabreSuiteSchema {
 
         updated_at: Date,
         created_at: Date,
+        verified: Boolean,
         verivied_at: Date,
         changes_log: [DescriptionChangeLog]
     };    
