@@ -164,17 +164,22 @@ export default class ImageManagerAction {
         Util.spinner.start();
         return new Promise<boolean>((resolve, reject) => {
             let suites: SabreSuite[] = this.hotel.get("suites");
-            for (let i = 0; i < suites.length; i++) {
-                let changeslog: DescriptionChangeLog[] = suites[i].get("changes_log");
-                if (changeslog) {
-                    let currenttime = moment(moment.now()).toDate();
-                    for (let n = 0; n < changeslog.length; n++) {
-                        changeslog[n].verified = true;
-                        changeslog[n].verivied_at = currenttime;
+            if (this.workingWith == WorkType.SUITE) {
+                const suite: SabreSuite = this.workingItem as SabreSuite;
+                for (let i = 0; i < suites.length; i++) {
+                    if (suite.get("sabreID") == suites[i].get("sabreID")) {
+                        let changeslog: DescriptionChangeLog[] = suites[i].get("changes_log");
+                        if (changeslog) {
+                            let currenttime = moment(moment.now()).toDate();
+                            for (let n = 0; n < changeslog.length; n++) {
+                                changeslog[n].verified = true;
+                                changeslog[n].verivied_at = currenttime;
+                            }
+                            suites[i].set("changes_log", changeslog);
+                            suites[i].set("verified", true);
+                            suites[i].set("verivied_at", currenttime);
+                        }
                     }
-                    suites[i].set("changes_log", changeslog);
-                    suites[i].set("verified", true);
-                    suites[i].set("verivied_at", currenttime);
                 }
             }
             this.hotel!.update({

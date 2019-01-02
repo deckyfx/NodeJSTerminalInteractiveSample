@@ -41,6 +41,23 @@ export class InquirerSelectHotelAnswer extends InquirerAnswerBase<SabreHotel | n
                 } else {
                     this.name += `leven: ${Util.printValue(hotel.levenDistance)} ${hotel.levenDistance == 1? Util.figures.heart : ''}`;
                 }
+                let description_change = false;
+                let suites = hotel.get("suites") as Array<SabreSuite>;
+                for (let suite of suites) {
+                    let unverified_changes = suite.get('changes_log') as Array<DescriptionChangeLog>;
+                    for (let log of unverified_changes) {
+                        if (!log.verified) {
+                            if (log.label == "description") {
+                                description_change = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (description_change) {
+                        break;
+                    }
+                }
+                this.name += ` ${description_change? Util.printWarning():""}`;
             }
         }
     }
