@@ -5,6 +5,7 @@ import { JSDOM } from "jsdom";
 import RepositoryBase from "./RepositoryBase";
 import Util from "../Util";
 import _ = require("lodash");
+import { InquirerConfirmAnswer } from "./hotelrepository/InquirerAnswer";
 
 type RequestConfig = Array<{ search?: string, tagtext?: string, data: string }>;
 
@@ -203,13 +204,36 @@ export default abstract class SessionRepository extends RepositoryBase {
             });
         }).catch((err) => {
             Util.spinner.stop();
-            return Promise.reject(err);
+            return this.handleRequestError(err)
+            .then((answer) => {
+                if (answer) {
+                    return this.doRequest(datastring);
+                } else {
+                    return Promise.reject(err);
+                }
+            });
         });
     }
 
     public static replaceTextInsideTag(source: string, tag: string, replace: string): string {
         const regex = new RegExp(`(<${tag}>)([^<]*)(</${tag}>)`, "gi");
         return source.replace(regex, `$1${replace}$3`);
+    }
+
+    private static handleRequestError(e: any): Promise<boolean>{
+        if (e instanceof Error) {
+            console.log(e.message);
+            return Util.prompt<InquirerConfirmAnswer>({
+                type: 'confirm',
+                name: 'value',
+                message: `Request error, do you want to retry?`,
+                pageSize: 15,
+                default: true
+            }).then((answer) => {
+                return Promise.resolve(answer.value!);
+            })
+        }
+        return Promise.resolve(false);
     }
 }
 

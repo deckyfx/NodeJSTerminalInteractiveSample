@@ -109,7 +109,7 @@ export class InquirerSelectSuiteAnswer extends InquirerAnswerBase<SabreSuite | n
                     `${suite.get("is_available") ? Util.printSuccess() : Util.printFailure()} `+ 
                     `[${idx}] ${suite.get('name') } `+
                     `(${Util.printValue(sabreID)}), `+
-                    `${Util.printValue(suite.get("images").length)} img(s), ` +
+                    `${Util.printValue(suite.get("images").length)} img(s), `+
                     `${Util.printValue(unverified_changes_count)} change(s) `;
             }
         }
