@@ -171,7 +171,6 @@ export default class SaveHotelToMongo {
                     "cancel_policy.numeric",
                     "cancel_policy.option",
                     "cancel_policy.description",
-                    "cancel_policy.numeric",
                     "commission.enabled",
                     "commission.description",
                     "taxes.total_rate",
