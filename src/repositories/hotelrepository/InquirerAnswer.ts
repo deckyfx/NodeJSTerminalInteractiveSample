@@ -116,8 +116,10 @@ export class InquirerSelectSuiteAnswer extends InquirerAnswerBase<SabreSuite | n
                 let suite = value! as SabreSuite;
                 let sabreID = suite.get('sabreID')? suite.get('sabreID') : "sabreID not yet set";
                 let unverified_changes = suite.get('changes_log') as Array<DescriptionChangeLog>;
+                let is_verified = suite.get('verified');
                 let unverified_changes_count = 0;
                 let description_change = false;
+                let is_new_suite = false;
                 for (let log of unverified_changes) {
                     if (!log.verified) {
                         unverified_changes_count += 1;
@@ -126,13 +128,16 @@ export class InquirerSelectSuiteAnswer extends InquirerAnswerBase<SabreSuite | n
                         }
                     }
                 }
+                if (unverified_changes_count == 0 && !is_verified) {
+                    is_new_suite = true;
+                }
                 this.name = 
                     `${suite.get("is_available") ? Util.printSuccess() : Util.printFailure()} `+ 
                     `[${idx}] ${suite.get('name') } `+
                     `(${Util.printValue(sabreID)}), `+
                     `${Util.printValue(suite.get("images").length)} img(s), `+
                     `${Util.printValue(unverified_changes_count)} change(s), `+
-                    `${description_change? Util.printWarning():""}`;
+                    `${description_change? Util.printWarning():""} ${is_new_suite? Util.printStar():""}`;
             }
         }
     }

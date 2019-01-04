@@ -287,7 +287,7 @@ export default class TaskHistory extends ActionBase {
             });
         } else {
             return Promise.resolve(true);
-        }        
+        }
     }
 
     private WithTasks(tasks: Array<Task>, action: number): Promise<boolean> {
@@ -302,7 +302,7 @@ export default class TaskHistory extends ActionBase {
                 Util.vorpal.log(`Executing ${Util.printValue(this.tasksSize)} tasks`);
                 return Util.SequencePromises<Task, Task>(_tasks, this.SearchHotelBridge.bind(this))
                 .then((tasks) => {
-                    return Promise.resolve(false);
+                    return this.PreparingReport(tasks);
                 });
             } break;
             case 2: {
@@ -386,6 +386,49 @@ export default class TaskHistory extends ActionBase {
             this.tasksProgress += 1;
             return Promise.resolve(task);
         })
+    }
+
+    private PreparingReport(tasks: Array<Task>) : Promise<boolean> {
+        let choices: Array<any> = new Array<any>();
+        Util.vorpal.log(`Do you want to generate report and send it to email?`);
+        if (HotelSearchCache.length > 0) {
+            choices.push(new InquirerSelectTaskAnswer(`No, don't send email`, 0));
+            choices.push(new InquirerSelectTaskAnswer("Send to nila@itprovent.com", 1));
+            choices.push(new Util.inquirer.Separator());
+            return Util.prompt<InquirerSelectTaskAnswer>({
+                type: 'list',
+                name: 'value',
+                message: `What would yo do next?`,
+                choices: choices,
+                default: 0
+            }).then((answer) => {
+                let val = answer.value!;
+                if ( typeof(val) === "number" ) {
+                    let choice = val as number;
+                    switch (choice) {
+                        case 1: {
+                            return this.GenerateReport(tasks);
+                        } break;
+                        default: {
+                            return Promise.resolve(true);
+                        } break;
+                    }
+                } else {
+                    return Promise.resolve(true);
+                }
+            });
+        } else {
+            return Promise.resolve(true);
+        }
+    }
+
+    private GenerateReport(tasks: Array<Task>) : Promise<boolean> {
+        // Should generate report about
+        // 1. Berapa hotel yang di retry
+        // succerss berapa, failed berapa
+        // hotel dan suites mana saja berubah
+        // sabreName, sabreID, city.
+        return Promise.resolve(true);
     }
 }
 

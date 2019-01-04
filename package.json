@@ -70,6 +70,7 @@
     "lodash": "^4.17.10",
     "moment": "^2.22.2",
     "mongoose": "^5.2.2",
+    "nodemailer": "^5.0.0",
     "papaparse": "^4.5.1",
     "readable-stream": "^2.3.6",
     "really-relaxed-json": "^0.2.24",

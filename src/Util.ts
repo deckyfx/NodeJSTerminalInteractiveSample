@@ -60,6 +60,10 @@ export class Util {
     public printInfo(): string {
         return `${this.figures.arrowRight} ${this.clc.blue.bold(this.figures.info)}`;
     }
+    
+    public printStar(): string {
+        return `${this.figures.arrowRight} ${this.clc.blue.bold(this.figures.star)}`;
+    }
 
     public printValue(value: string | number): string {
         return `${this.clc.blue(value)}`;
