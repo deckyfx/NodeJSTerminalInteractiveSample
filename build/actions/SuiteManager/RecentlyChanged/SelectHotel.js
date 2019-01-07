@@ -13,16 +13,9 @@ class SelectHotel {
     SearchHotels() {
         return MongoDB_1.default.connect()
             .then((mongo) => {
-            Util_1.default.vorpal.log(`Search for hotels where its suites are that recently changed...`);
+            Util_1.default.vorpal.log(`Search for hotels where the suites are recently changed...`);
             Util_1.default.spinner.start();
             return new Promise((resolve, reject) => {
-                // search where suites recently changed
-                //let search_condition = [{$unwind: '$suites'}, { $unwind: "$suites.changes_log" }, {
-                //    $match: {
-                //        "suites.changes_log.verified": { $ne: true }
-                //    }
-                //}];
-                //mongo.models.Hotel!.aggregate(search_condition, (e : any, docs : any) => {
                 let search_condition = { $and: [
                         { suites: { $elemMatch: { $and: [{ verified: { $ne: true } }, { verified: { $exists: true } }, { sabreID: { $exists: true } }] } } },
                         { sabreID: { $exists: true } }

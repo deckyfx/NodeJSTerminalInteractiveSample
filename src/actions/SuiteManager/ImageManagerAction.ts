@@ -1,7 +1,9 @@
 import SabreHotel from "../../models/SabreHotel";
 import SabreSuite, { DescriptionChangeLog } from "../../models/SabreSuite";
 import Util from "../../Util";
-import { InquirerInputAnswer, InquirerSelectSabreImageAnswer } from "../../repositories/hotelrepository/InquirerAnswer";
+import { InquirerInputAnswer, 
+    InquirerSelectSabreImageAnswer, 
+    InquirerSelectSuiteByItsDescriptionAnswer } from "../../repositories/hotelrepository/InquirerAnswer";
 import SabreImage from "../../models/SabreImage";
 import mongo, { MongoDB } from "../../MongoDB";
 import _ = require("lodash");
@@ -43,6 +45,7 @@ export default class ImageManagerAction {
         choices.push(new InquirerSelectSabreImageAnswer("Add images", 2));
         let commit_menu = "Commit changes";
         if (this.workingWith == WorkType.SUITE) {
+            choices.push(new InquirerSelectSabreImageAnswer("Using images from another suite", 3));
             const suite: SabreSuite = this.workingItem as SabreSuite;
             let changelogs = suite.changes_log;
             if (changelogs) {
@@ -54,12 +57,12 @@ export default class ImageManagerAction {
                     }
                 }
                 if (havechange) {
-                    choices.push(new InquirerSelectSabreImageAnswer("View Changes Log", 4));
+                    choices.push(new InquirerSelectSabreImageAnswer("View Changes Log", 5));
                     commit_menu = "Commit changes (will verify all changes log)"
                 }
             }
         }
-        choices.push(new InquirerSelectSabreImageAnswer(commit_menu, 3));
+        choices.push(new InquirerSelectSabreImageAnswer(commit_menu, 4));
         choices.push(new Util.inquirer.Separator());
         let images = this.workingItem.get("images") as Array<SabreImage>;
         choices = _.concat(choices, _.map(images, (image) => {
@@ -68,7 +71,9 @@ export default class ImageManagerAction {
         choices = _.filter(choices, (choice) => {
             return choice !== undefined;
         });
-        choices.push(new Util.inquirer.Separator());
+        if (images.length > 0) {
+            choices.push(new Util.inquirer.Separator());
+        }
         return Util.prompt<InquirerSelectSabreImageAnswer>({
             type: 'list',
             message: "Select what you want to do",
@@ -88,9 +93,12 @@ export default class ImageManagerAction {
                         return this.addNewImage()
                     } break;
                     case 3: {
-                        return this.commitChanges();
+                        return this.selectSuiteToBeCopied()
                     } break;
                     case 4: {
+                        return this.commitChanges();
+                    } break;
+                    case 5: {
                         const suite: SabreSuite = this.workingItem as SabreSuite;
                         let ChangeLogVIEWER = new ChangeLogsViewer(suite.changes_log!);
                         return ChangeLogVIEWER.Resolve();
@@ -135,14 +143,12 @@ export default class ImageManagerAction {
             switch (this.workingWith) {
                 case WorkType.SUITE: {
                     let suites: SabreSuite[] = this.hotel.get("suites");
-                    let currenttime = moment(moment.now()).toDate();
                     let new_suites: SabreSuite[] = _.map(suites, (suite) => {
                         if (this.suite!.get("sabreID") === suite.get("sabreID")) {
                             let images = suite.get("images");
                             images = _.concat(images, this.parseImageURLs(a_urls));
                             suite.set("images", images);
                         }
-                        suite.set("verivied_at", currenttime);
                         return suite;
                     })
                     this.hotel.set("suites", new_suites);
@@ -157,6 +163,64 @@ export default class ImageManagerAction {
             Util.vorpal.log(`Done`);
             return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
         })
+    }
+    
+    private selectSuiteToBeCopied(): Promise<TerminalFlow<ActionResult>> {
+        if (this.workingWith != WorkType.SUITE) {
+            Util.vorpal.log(`Can only be used if working with a suite`);
+            return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
+        }
+        const selected_suite: SabreSuite = this.workingItem as SabreSuite;
+        Util.vorpal.log(`Current Suite description: ${Util.printValue(selected_suite.get('description'))}`);
+        Util.vorpal.log(`Displaying Suites by its description, omitting zero images`);
+        let choices: Array<any> = new Array<any>();
+        choices.push(new InquirerSelectSuiteByItsDescriptionAnswer("Return to previous screen", -1));
+        choices.push(new Util.inquirer.Separator());
+        let suites: SabreSuite[] = this.hotel.get("suites");
+        let i = 0;
+        choices = _.concat(choices, _.map( _.sortBy( _.map( _.filter(suites, (suite) => {
+            return suite.get('images').length > 0
+        }),
+        (suite) => {
+            suite.rate = Util.leven(selected_suite.get("description"), suite.get("description"));
+            return suite;
+        }),
+        ['rate'], ['asc']),
+        (suite) => {
+            i++;
+            return new InquirerSelectSuiteByItsDescriptionAnswer("", suite, i - 1);
+        }));
+        return Util.prompt<InquirerSelectSuiteByItsDescriptionAnswer>({
+            type: 'list',
+            message: "Select suite you want to copy from",
+            name: 'value',
+            choices: choices,
+            pageSize: 15,
+            default: (choices.length - 2)
+        }).then((answer) => {
+            let val = answer.value!;
+            if ( typeof(val) === "number" ) {
+                let choice = val as number;
+                switch (choice) {
+                    default: {
+                        return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
+                    } break;
+                }
+            } else {
+                let selected_suite = val as SabreSuite;
+                let suites: SabreSuite[] = this.hotel.get("suites");
+                let new_suites: SabreSuite[] = _.map(suites, (suite) => {
+                    if (this.suite!.get("sabreID") === suite.get("sabreID")) {
+                        suite.set("images", selected_suite.get('images'));
+                        Util.vorpal.log(`Copied ${Util.printValue(selected_suite.get('images').length)} image(s)`);
+                    }
+                    return suite;
+                });
+                this.hotel.set("suites", new_suites);
+                Util.vorpal.log(`Done`);
+            }
+            return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
+        });
     }
 
     private commitChanges(): Promise<TerminalFlow<ActionResult>> {
@@ -197,7 +261,7 @@ export default class ImageManagerAction {
                 Util.vorpal.log(`Error, something happened`);
             }
             Util.spinner.stop();
-            Util.vorpal.log(`Done`);           
+            Util.vorpal.log(`Done`);
             return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
         })
     }

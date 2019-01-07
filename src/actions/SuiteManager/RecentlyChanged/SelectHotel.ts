@@ -14,16 +14,9 @@ export default class SelectHotel {
     private SearchHotels() : Promise<TerminalFlow<SabreHotel>>{
         return mongo.connect()
         .then((mongo: MongoDB) => {
-            Util.vorpal.log(`Search for hotels where its suites are that recently changed...`);
+            Util.vorpal.log(`Search for hotels where the suites are recently changed...`);
             Util.spinner.start();
             return new Promise<SabreHotel[]>((resolve, reject) => {
-                // search where suites recently changed
-                //let search_condition = [{$unwind: '$suites'}, { $unwind: "$suites.changes_log" }, {
-                //    $match: {
-                //        "suites.changes_log.verified": { $ne: true }
-                //    }
-                //}];
-                //mongo.models.Hotel!.aggregate(search_condition, (e : any, docs : any) => {
                 let search_condition = { $and: [ 
                     { suites : { $elemMatch : { $and : [ { verified : { $ne: true } } , { verified : { $exists: true } } , { sabreID : { $exists : true } } ] } } }, 
                     { sabreID : { $exists : true } } 

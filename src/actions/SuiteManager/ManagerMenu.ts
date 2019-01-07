@@ -13,7 +13,7 @@ export default class ManagerMenu {
         let choices: Array<any> = new Array<any>();
         choices.push(new InquirerIndexedAnswer("Exit", 0));
         choices.push(new InquirerIndexedAnswer("Scan hotel which contains suites with empty images", 1));
-        choices.push(new InquirerIndexedAnswer("Scan hotel which its suites are recently changed", 2));
+        choices.push(new InquirerIndexedAnswer("Scan hotel which the suites are recently changed", 2));
         choices.push(new InquirerIndexedAnswer("Manage hotel and suite images manually", 3));
         choices.push(new Util.inquirer.Separator());
         return Util.prompt<InquirerIndexedAnswer>({

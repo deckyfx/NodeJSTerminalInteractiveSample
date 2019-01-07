@@ -143,6 +143,22 @@ export class InquirerSelectSuiteAnswer extends InquirerAnswerBase<SabreSuite | n
     }
 }
 
+export class InquirerSelectSuiteByItsDescriptionAnswer extends InquirerAnswerBase<SabreSuite | number> {
+    public constructor(public name?: string, public value?: SabreSuite | number, idx?: number) {
+        super(name, value);
+        if (typeof(value!) === "number" ) {
+        } else {
+            if (value) {
+                let suite = value! as SabreSuite;
+                this.name = 
+                    `[${idx}] ${suite.get('description') } | `+
+                    `${Util.printValue(suite.get("images").length)} img(s), | ` + 
+                    `leven: ${Util.printValue(suite.rate!)}`;
+            }
+        }
+    }
+}
+
 export class InquirerSelectSabreImageAnswer extends InquirerAnswerBase<SabreImage | number> {
     public constructor(public name?: string, public value?: SabreImage | number) {
         super(name, value);
