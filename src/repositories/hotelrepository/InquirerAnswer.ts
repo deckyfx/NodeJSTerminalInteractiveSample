@@ -153,7 +153,7 @@ export class InquirerSelectSuiteByItsDescriptionAnswer extends InquirerAnswerBas
                 this.name = 
                     `[${idx}] ${suite.get('description') } | `+
                     `${Util.printValue(suite.get("images").length)} img(s), | ` + 
-                    `leven: ${Util.printValue(suite.rate!)}`;
+                    `leven: ${Util.printValue(suite.get("rate"))} ${suite.get("rate") == 1? Util.figures.heart : ''}`;
             }
         }
     }

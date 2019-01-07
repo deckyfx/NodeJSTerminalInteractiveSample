@@ -178,14 +178,18 @@ export default class ImageManagerAction {
         choices.push(new Util.inquirer.Separator());
         let suites: SabreSuite[] = this.hotel.get("suites");
         let i = 0;
-        choices = _.concat(choices, _.map( _.sortBy( _.map( _.filter(suites, (suite) => {
+        suites = _.map( _.filter(suites, (suite) => {
             return suite.get('images').length > 0
         }),
         (suite) => {
-            suite.rate = Util.leven(selected_suite.get("description"), suite.get("description"));
+            suite.set("rate", Util.compareString(selected_suite.get("description"), suite.get("description")));
             return suite;
-        }),
-        ['rate'], ['asc']),
+        });
+        suites = suites.sort(function(a, b) {
+            return a.get("rate") < b.get("rate") ? 1 : -1;
+        });
+
+        choices = _.concat(choices, _.map( suites ,
         (suite) => {
             i++;
             return new InquirerSelectSuiteByItsDescriptionAnswer("", suite, i - 1);
