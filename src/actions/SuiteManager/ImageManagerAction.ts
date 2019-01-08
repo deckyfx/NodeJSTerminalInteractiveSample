@@ -115,7 +115,12 @@ export default class ImageManagerAction {
                 }
             } else {
                 let choice = val as SabreImage;
-                Util.vorpal.log(`Image URL: ${Util.printValue(choice.get("url"))}`);
+                try {
+                    Util.vorpal.log(`Opening URL: ${Util.printValue(choice.get("url"))}`);
+                    Util.opn(choice.get("url"));
+                } catch(e) {
+                    Util.vorpal.console.warn(`Failed ${e}`);
+                }
                 return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
             }
         });
@@ -316,6 +321,33 @@ export default class ImageManagerAction {
         return Promise.resolve(new TerminalFlow<ActionResult>(FlowDirection.NEXT, new ActionResult()));
     }
 
+    private verifySuiteChangeLogs(sample?: SabreSuite): Array<SabreSuite> {
+        let suites: SabreSuite[] = this.hotel.get("suites");
+        for (let i = 0; i < suites.length; i++) {
+            let change = true;
+            if (sample) {
+                change = false;
+                if (sample.get("sabreID") == suites[i].get("sabreID")) {
+                    change = true;
+                }
+            }
+            if (change) {
+                let changeslog: DescriptionChangeLog[] = suites[i].get("changes_log");
+                if (changeslog) {
+                    let currenttime = moment(moment.now()).toDate();
+                    for (let n = 0; n < changeslog.length; n++) {
+                        changeslog[n].verified = true;
+                        changeslog[n].verivied_at = currenttime;
+                    }
+                    suites[i].set("changes_log", changeslog);
+                    suites[i].set("verified", true);
+                    suites[i].set("verivied_at", currenttime);
+                }
+            }
+        } 
+        return suites;
+    }
+
     private commitChanges(): Promise<TerminalFlow<ActionResult>> {
         Util.vorpal.log(`Saving changes`);
         Util.spinner.start();
@@ -323,21 +355,9 @@ export default class ImageManagerAction {
             let suites: SabreSuite[] = this.hotel.get("suites");
             if (this.workingWith == WorkType.SUITE) {
                 const suite: SabreSuite = this.workingItem as SabreSuite;
-                for (let i = 0; i < suites.length; i++) {
-                    if (suite.get("sabreID") == suites[i].get("sabreID")) {
-                        let changeslog: DescriptionChangeLog[] = suites[i].get("changes_log");
-                        if (changeslog) {
-                            let currenttime = moment(moment.now()).toDate();
-                            for (let n = 0; n < changeslog.length; n++) {
-                                changeslog[n].verified = true;
-                                changeslog[n].verivied_at = currenttime;
-                            }
-                            suites[i].set("changes_log", changeslog);
-                            suites[i].set("verified", true);
-                            suites[i].set("verivied_at", currenttime);
-                        }
-                    }
-                }
+                suites = this.verifySuiteChangeLogs(suite);
+            } else if (this.workingWith == WorkType.HOTEL) {
+                suites = this.verifySuiteChangeLogs();
             }
             this.hotel!.update({
                 $set: { 

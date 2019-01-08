@@ -14,6 +14,7 @@ const leven = require('leven');
 const inquirer_cbp = require('inquirer-checkbox-plus-prompt');
 const rjson = require('really-relaxed-json');
 import { XmlEntities } from "html-entities";
+import opn = require('opn');
 
 inquirer.registerPrompt('checkbox-plus', inquirer_cbp);
 
@@ -44,6 +45,7 @@ export class Util {
     public leven = leven;
     public entities = new XmlEntities();
     public rjson = rjson;
+    public opn = opn;
 
     public printSuccess(): string {
         return `${this.figures.arrowRight} ${this.clc.green.bold(this.figures.tick)}`;
