@@ -13,6 +13,7 @@ import HotelsImagesCounter from "./actions/HotelsImagesCounter";
 import Cleanup from "./Cleanup";
 import SessionRepository from "./repositories/SessionRepository";
 import Server from "./Server";
+import APIServer from "./actions/APIServer/APIServer";
 
 export class Startup {
     public static main(): number {
