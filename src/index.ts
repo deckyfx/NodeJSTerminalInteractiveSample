@@ -92,6 +92,12 @@ export class Startup {
                     .action(HotelsImagesCounter.build);
 
                 Util.vorpal
+                    .command('apiserver')
+                    .description('Start API Server')
+                    .alias('api-server')
+                    .action(APIServer.build);    
+
+                Util.vorpal
                     .delimiter(Util.clc.blue('myapp$'))
                     .parse(process.argv)
                     .show();
