@@ -59,12 +59,7 @@ typings/
 
 # next.js build output
 .next
-build/*.js
-build/*.map
-build/*/*.js
-build/*/*.map
-build/*/*/*.js
-build/*/*/*.map
+build/*
 xml/result.*
 package-lock.json
 
