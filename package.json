@@ -14,8 +14,8 @@
     "compile": "./node_modules/.bin/tsc -p tsconfig.json && npm run copy-public",
     "copy-public": "./bin/copy-public.sh",
     "compile-win": "node_modules\\.bin\\tsc.cmd -p tsconfig.json && npm run copy-public-win",
-    "copy-public-win-ps": "./bin/copy-public-win-ps.bat",
-    "copy-public-win": "./bin/copy-public-win.bat",
+    "copy-public-win-ps": "bin\\copy-public-win-ps.bat",
+    "copy-public-win": "bin\\copy-public-win.bat",
     "cleanbuild": "rm -r ./build/*",
     "movebuild": "mv ./build/src/* ./build/",
     "start": "node ./build/index.js"

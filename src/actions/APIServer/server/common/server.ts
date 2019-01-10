@@ -20,14 +20,25 @@ export default class ExpressServer {
         app.use(bodyParser.json({ limit: process.env.REQUEST_LIMIT || '100kb' }));
         app.use(bodyParser.urlencoded({ extended: true, limit: process.env.REQUEST_LIMIT || '100kb' }));
         app.use(cookieParser(process.env.SESSION_SECRET));
-        app.use(express.static(`${root}/public`), serveIndex(`${root}/public`, {'icons': true}));
-        app.use('/public', express.static(`${root}/public`), serveIndex(`${root}/public`, {'icons': true}));
-        app.use('/js', express.static(`${root}/public/js`), serveIndex(`${root}/public/js`, {'icons': true}));
-        app.use('/css', express.static(`${root}/public/css`), serveIndex(`${root}/public/css`, {'icons': true}));
-        app.use("/image", express.static(`${root}/public/image`), serveIndex(`${root}/public/image`, {'icons': true}));
-        app.engine('hbs', consolidate.handlebars);
+
+        app.use(express.static(`${path.join(root, 'public')}`), 
+                    serveIndex(`${path.join(root, 'public')}`, {'icons': true}));
+
+        app.use('/public',  express.static(`${path.join(root, 'public')}`), 
+                                serveIndex(`${path.join(root, 'public')}`, {'icons': true}));
+
+        app.use('/js',      express.static(`${path.join(root, 'public', 'js')}`), 
+                                serveIndex(`${path.join(root, 'public', 'js')}`, {'icons': true}));
+
+        app.use('/css',     express.static(`${path.join(root, 'public', 'css')}`), 
+                                serveIndex(`${path.join(root, 'public', 'css')}`, {'icons': true}));
+
+        app.use("/image",   express.static(`${path.join(root, 'public', 'image')}`), 
+                                serveIndex(`${path.join(root, 'public', 'image')}`, {'icons': true}));
+
+        app.engine('hbs', consolidate.handlebars);        
         app.set('view engine', 'hbs');
-        app.set('views', `${root}/views`);
+        app.set('views', `${path.join(root, 'views')}`);
     }
 
     router(routes: (app: Application) => void): ExpressServer {

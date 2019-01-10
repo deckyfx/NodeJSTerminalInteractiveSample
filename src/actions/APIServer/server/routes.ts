@@ -10,6 +10,7 @@ export default function routes(app: Application): void {
     app.use('/api/v1/examples', examplesRouter);
 
     app.get('/template', function(req, res){
+        // don't include file extension (.hbs)
         res.render('sample', {
             hello: 'Hello World'
         });
