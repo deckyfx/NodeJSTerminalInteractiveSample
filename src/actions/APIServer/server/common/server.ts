@@ -2,10 +2,13 @@ import * as express from 'express';
 import { Application } from 'express';
 import * as path from 'path';
 import * as bodyParser from 'body-parser';
-import * as http from 'http';
-import * as os from 'os';
 import * as cookieParser from 'cookie-parser';
 import * as serveIndex from 'serve-index';
+import * as http from 'http';
+import * as os from 'os';
+import * as consolidate from "consolidate";
+import * as handlebars from "handlebars";
+
 import Util from '../../../../Util';
 
 const app = express();
@@ -22,6 +25,9 @@ export default class ExpressServer {
         app.use('/js', express.static(`${root}/public/js`), serveIndex(`${root}/public/js`, {'icons': true}));
         app.use('/css', express.static(`${root}/public/css`), serveIndex(`${root}/public/css`, {'icons': true}));
         app.use("/image", express.static(`${root}/public/image`), serveIndex(`${root}/public/image`, {'icons': true}));
+        app.engine('hbs', consolidate.handlebars);
+        app.set('view engine', 'hbs');
+        app.set('views', `${root}/views`);
     }
 
     router(routes: (app: Application) => void): ExpressServer {
