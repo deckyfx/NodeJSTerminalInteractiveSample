@@ -3,6 +3,7 @@ import Util from "../../Util";
 import ActionBase from "../ActionBase";
 import Server from './server/common/server';
 import routes from './server/routes';
+import socketroutes from './server/socketroutes';
 
 export default class APIServer extends ActionBase {
     static buildAutoComplete: any;
@@ -26,6 +27,7 @@ export default class APIServer extends ActionBase {
             // Write your Express Server here
             new Server()
             .router(routes)
+            .socketrouter(socketroutes)
             .listen(3000);
             
         }).catch((e) => {

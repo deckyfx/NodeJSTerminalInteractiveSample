@@ -8,7 +8,7 @@ import SabreSuite, { DescriptionChangeLog } from "../../models/SabreSuite";
 import SabreImage from "../../models/SabreImage";
 import moment = require("moment");
 
-abstract class InquirerAnswerBase<T> {
+export abstract class InquirerAnswerBase<T> {
     public constructor(public name?: string, public value?: T) {
     }
 }

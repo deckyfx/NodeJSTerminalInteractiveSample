@@ -95,7 +95,19 @@ export class Startup {
                     .command('apiserver')
                     .description('Start API Server')
                     .alias('api-server')
-                    .action(APIServer.build);    
+                    .action(APIServer.build);
+
+                Util.vorpal
+                    .command('test')
+                    .description('Test')
+                    .alias('test')
+                    .action(() => {
+                        Util.spinner.start();
+                        setTimeout(() => {
+                            Util.vorpal.log("Fired from another class")
+                            Util.spinner.stop();
+                        }, 3000)
+                    });
 
                 Util.vorpal
                     .delimiter(Util.clc.blue('myapp$'))

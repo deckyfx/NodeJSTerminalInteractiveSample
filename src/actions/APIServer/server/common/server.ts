@@ -5,6 +5,7 @@ import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
 import * as serveIndex from 'serve-index';
 import * as http from 'http';
+import * as socketio from "socket.io";
 import * as os from 'os';
 import * as consolidate from "consolidate";
 import * as handlebars from "handlebars";
@@ -14,6 +15,9 @@ import Util from '../../../../Util';
 const app = express();
 
 export default class ExpressServer {
+    private serverHTTP: http.Server;
+    private io: socketio.Server;
+
     constructor() {
         const root = path.normalize(__dirname + '/..');
         app.set('appPath', root + 'client');
@@ -39,6 +43,11 @@ export default class ExpressServer {
         app.engine('hbs', consolidate.handlebars);        
         app.set('view engine', 'hbs');
         app.set('views', `${path.join(root, 'views')}`);
+        app.set('view options', {layout: 'other'});
+
+        this.serverHTTP = new http.Server(app);
+        this.io = socketio(this.serverHTTP);
+        app.set("io", this.io);
     }
 
     router(routes: (app: Application) => void): ExpressServer {
@@ -46,9 +55,15 @@ export default class ExpressServer {
         return this;
     }
 
+    socketrouter(socketroutes: (app: Application) => void): any {
+        socketroutes(app);
+        return this;
+    }
+
     listen(p: string | number = 3000): Application {
         const welcome = (port: string | number) => () => Util.vorpal.log(`Server ready on port ${port}`);
-        http.createServer(app).listen(p, welcome(p));
+        app.set("port", p);
+        this.serverHTTP.listen(p, welcome(p));
         return app;
     }
 }

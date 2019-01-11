@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>
+            {{#if title}}
+                {{title}}
+            {{else}}
+                Suite Treat Sabre Data
+            {{/if}}
+        </title>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/custom.css">
+        {{#> head-block}}
+        {{!-- Custom <head> content per page could be added. --}}
+        {{/head-block}}
+    </head>
+    <body>
+        {{#> navigation-block}}
+            {{> includes/navigation }}
+        {{/navigation-block}}
+        
+        {{#> hero-block}}
+        {{!-- Hero content goes here. --}}
+        {{/hero-block}}
+
+        {{#> content-block}}
+        {{/content-block}}
+
+        <footer>
+        {{#> footer-block}}
+            {{> includes/footer }}
+        {{/footer-block}}
+        </footer>
+
+        {{#> scripts-block}}
+        {{!-- Custom scripts per page can be added. --}}
+        {{/scripts-block}}
+    </body>
+</html>

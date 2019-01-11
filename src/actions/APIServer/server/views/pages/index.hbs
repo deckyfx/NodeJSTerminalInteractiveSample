@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>
+            {{#if title}}
+                {{title}}
+            {{else}}
+                Suite Treat Sabre Data
+            {{/if}}
+        </title>
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <link rel="stylesheet" href="css/custom.css">
+        {{#> head-block}}
+        {{!-- Custom <head> content per page could be added. --}}
+        {{/head-block}}
+    </head>
+    <body>
+		{{!-- <div class="loader">
+			<div class="st-loader">
+				<div>
+					<img src="./image/suitetreat.png" alt="Logo SuiteTreat">
+				</div>
+				<div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+			</div>
+		</div> --}}
+		<div class="main-page">
+			{{> navigationBlock }}
+
+			<div class="container mt-5 mb-5">
+				<nav class="mb-3">
+					<div class="nav nav-pills justify-content-center" id="nav-tab" role="tablist">
+						<a class="nav-item nav-link active" id="nav-all-tab" data-toggle="tab" href="#nav-all" role="tab" aria-controls="nav-all" aria-selected="true">All</a>
+						<a class="nav-item nav-link" id="nav-recent-tab" data-toggle="tab" href="#nav-recent" role="tab" aria-controls="nav-recent" aria-selected="false">Recent</a>
+						<a class="nav-item nav-link" id="nav-change-tab" data-toggle="tab" href="#nav-change" role="tab" aria-controls="nav-change" aria-selected="false">Change</a>
+					</div>
+				</nav>
+				<div class="tab-content" id="nav-tabContent">
+					<div class="tab-pane fade show active" id="nav-all" role="tabpanel" aria-labelledby="nav-all-tab">
+						<div class="row justify-content-center">
+							<div class="col-12 shadow-sm p-4 bg-white rounded">
+								<h4 class="mb-3 mt-2">All</h4>
+								<div class="table-container table-responsive">
+									<table class="table">
+										<thead>
+											<tr>
+												<th scope="col">Name</th>
+												<th scope="col">Email</th>
+												<th scope="col">Phone</th>
+												<th scope="col">Registration</th>
+												<th scope="col">Action</th>
+											</tr>
+										</thead>
+										<tbody>
+											{{!-- <tr>
+												<td colspan="5">
+												<div class="waiting text-center py-5">
+													<img src="./image/table-image.svg" alt="placeholder image">
+												</div>
+												</td>
+											</tr> --}}
+											<tr>
+												<td colspan="5">
+													<input name="accordion" type="radio" checked>
+													<h2>Languages Used</h2>
+													<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas, quam sequi expedita doloribus temporibus delectus quos explicabo consequuntur at saepe id, eveniet excepturi cupiditate dolorum alias non ducimus. A, blanditiis!</p>
+												</td>
+											</tr>
+											<tr>
+												<td colspan="5">
+													<input name="accordion" type="radio">
+													<h2>Languages Used 1</h2>
+													<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas, quam sequi expedita doloribus temporibus delectus quos explicabo consequuntur at saepe id, eveniet excepturi cupiditate dolorum alias non ducimus. A, blanditiis!</p>
+												</td>
+											</tr>
+											<tr>
+												<td colspan="5">
+													<input name="accordion" type="radio">
+													<h2>Languages Used 2</h2>
+													<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas, quam sequi expedita doloribus temporibus delectus quos explicabo consequuntur at saepe id, eveniet excepturi cupiditate dolorum alias non ducimus. A, blanditiis!</p>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane fade" id="nav-recent" role="tabpanel" aria-labelledby="nav-recent-tab">
+						<div class="row justify-content-center">
+							<div class="col-12 shadow-sm p-4 bg-white rounded">
+								<h4 class="mb-3 mt-2">Recent</h4>
+							</div>
+						</div>
+					</div>
+					<div class="tab-pane fade" id="nav-change" role="tabpanel" aria-labelledby="nav-change-tab">
+						<div class="row justify-content-center">
+							<div class="col-12 shadow-sm p-4 bg-white rounded">
+								<h4 class="mb-3 mt-2">Change</h4>
+							</div>
+						</div>
+					</div>
+				</div>
+		</div>
+        {{hello}}
+        
+        <footer>
+        	{{> footerBlock }}
+        </footer>
+    </body>
+</html>

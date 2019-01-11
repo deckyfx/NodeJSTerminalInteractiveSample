@@ -15,11 +15,16 @@ const inquirer_cbp = require('inquirer-checkbox-plus-prompt');
 const rjson = require('really-relaxed-json');
 import { XmlEntities } from "html-entities";
 import opn = require('opn');
+import * as socketio from "socket.io";
+import { InquirerAnswerBase } from "./repositories/hotelrepository/InquirerAnswer";
+import { Separator } from "inquirer";
 
 inquirer.registerPrompt('checkbox-plus', inquirer_cbp);
 
 export class Util {
     private static instance: Util;
+
+    private SocketHandler: SocketHandler | null = null;
 
     static getInstance() {
         if (!Util.instance) {
@@ -28,6 +33,8 @@ export class Util {
         }
         return Util.instance;
     }
+
+    static BACKUP: any = {};
 
     public Loger: Logger = LogManager;
     //public mongo: MongoDB = MongoDBInstance;
@@ -104,7 +111,118 @@ export class Util {
         });
     }
 
+    public ToggleSocketModeOn(socket: socketio.Socket): void {
+        if (socket) {
+            this.SocketHandler          = SocketHandler.getInstance();
+            this.SocketHandler.setSocket(socket); 
+
+            Util.BACKUP._vorpal_log     = this.vorpal.log;
+            this.vorpal.log             = this.SocketHandler.vorpallog.bind(this);
+
+            Util.BACKUP._spinner_start  = this.spinner.start;
+            this.spinner.start          = this.SocketHandler.spinnerstart.bind(this);
+
+            Util.BACKUP._spinner_stop   = this.spinner.stop;
+            this.spinner.stop           = this.SocketHandler.spinnerstop.bind(this);
+
+            Util.BACKUP._opn            = this.opn;
+            // @ts-ignore
+            this.opn                    = this.SocketHandler.opn.bind(this);
+
+            Util.BACKUP._prompt         = this.prompt;
+            // @ts-ignore
+            this.prompt                 = this.SocketHandler.prompt.bind(this);
+        } else {
+            this.SocketHandler          = null;
+            this.vorpal.log             = Util.BACKUP._vorpal_log;
+            this.spinner.start          = Util.BACKUP._spinner_start;
+            this.spinner.stop           = Util.BACKUP._spinner_stop;
+            this.opn                    = Util.BACKUP._opn;
+            this.prompt                 = Util.BACKUP._prompt;
+        }
+    }
+
+    public ToggleSocketModeOff(): void {
+        this.SocketHandler          = null;
+        this.vorpal.log             = Util.BACKUP._vorpal_log;
+        this.spinner.start          = Util.BACKUP._spinner_start;
+        this.spinner.stop           = Util.BACKUP._spinner_stop;
+        this.opn                    = Util.BACKUP._opn;
+        this.prompt                 = Util.BACKUP._prompt;
+    }
+
     private constructor() {
+    }
+}
+
+    
+type PromptConfig = {};
+export class SocketHandler {
+    private static instance: SocketHandler;
+    private static socket: socketio.Socket;
+
+    static getInstance() {
+        if (!SocketHandler.instance) {
+            SocketHandler.instance = new SocketHandler();
+        }
+        return SocketHandler.instance;
+    }
+
+    public constructor() {
+    }
+
+    public setSocket(socket: socketio.Socket) {
+        SocketHandler.socket = socket;
+    }
+    
+    public vorpallog(data: any): void {
+        if (SocketHandler.socket) {
+            SocketHandler.socket!.emit('vorpal.log', data);
+        }
+    }
+    
+    public spinnerstart(): void {
+        if (SocketHandler.socket) {
+            SocketHandler.socket.emit('spinner', true);
+        }
+    }
+    
+    public spinnerstop(data: any): void {
+        if (SocketHandler.socket) {
+            SocketHandler.socket.emit('spinner', false);
+        }
+    }
+    
+    public opn(data: any): void {
+        if (SocketHandler.socket) {
+            SocketHandler.socket.emit('opn', data);
+        }
+    }
+    
+    public prompt<T extends InquirerAnswerBase<any>>(config: {
+        type?: string,
+        message?: string,
+        name?: string,
+        pageSize?: number,
+        default?: number,
+        choices?: Array<T | any>,
+        [key: string]: any
+    }): Promise<T> {
+        if (SocketHandler.socket) {
+            SocketHandler.socket.emit('prompt', JSON.stringify(config));
+        }
+        Util.getInstance().vorpal.log(config.message);
+        return new Promise<T>((resolve, reject) => {
+            // should wait for input
+            SocketHandler.socket.on('prompt.answer', (answer_idx: number) => {
+                let answer = config.choices![answer_idx];
+                Util.getInstance().vorpal.log(`Answer: ${JSON.stringify(answer)}`);
+                if (answer instanceof Separator) {
+                } else {
+                    resolve(answer);
+                }
+            });
+        });
     }
 }
 

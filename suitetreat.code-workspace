@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "/Users/admin/Documents/GitHub/SuiteTreatSabreData-master"
 		}
 	],
 	"settings": {}
