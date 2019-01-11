@@ -11,14 +11,15 @@ export default function routes(app: Application): void {
     app.use('/api/v1/examples', examplesRouter);
     
     app.get('/suitetreat', function(req, res){
-    // don't include file extension (.hbs)
-    res.render('pages/index', {
-        layout: 'other',
-        partials: {
-            footerBlock: '../includes/footer',
-            navigationBlock: '../includes/navigation'
-        },
-        hello: 'Hello Suiters'
+        // don't include file extension (.hbs)
+        res.render('pages/index', {
+            layout: 'other',
+            partials: {
+                footerBlock: '../includes/footer',
+                navigationBlock: '../includes/navigation'
+            },
+            hello: 'Hello Suiters'
+        });
     });
 
     app.get('/template', function(req, res){
