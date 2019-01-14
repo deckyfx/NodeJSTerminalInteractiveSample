@@ -10,16 +10,19 @@ socket.on('connect', () => {
     
     // socket.emit('chat message', 'Hello');    
     socket.on('vorpal.log', (msg) => {
-        console.log(`Vorpal.log(${msg})`);
+        console.log(`${msg}`);
     });
     socket.on('spinner', (flag) => {
-        console.log(`spinner(${flag? 'TRUE':'FALSE'})`);
+        console.log(`${flag? 'LOADING DATA....':'FINISH LOADING DATA'}`);
     });
     socket.on('opn', (url) => {
-        console.log(`opn(${url})`);
+        console.log(`${url}`);
     });
     socket.on('prompt', (data) => {
-        console.log(`prompt(${data})`);
+        console.log(`${data}`);
+    });
+    socket.on('error', (data) => {
+        console.warn(`${e}`);
     });
 });
 
