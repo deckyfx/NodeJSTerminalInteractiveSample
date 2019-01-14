@@ -12,6 +12,9 @@ socket.on('connect', () => {
     socket.on('vorpal.log', (msg) => {
         console.log(`${msg}`);
     });
+    socket.on('vorpal.done', () => {
+        console.log(`VORPAL DONE`);
+    });
     socket.on('spinner', (flag) => {
         console.log(`${flag? 'LOADING DATA....':'FINISH LOADING DATA'}`);
     });

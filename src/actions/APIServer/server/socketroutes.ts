@@ -25,25 +25,32 @@ export default function socketroutes(app: Application): void {
 
         socket.on('vorpal', (msg) => {
             // run vorpal commands
+            var commandData = Util.vorpal.util.parseCommand(msg, Util.vorpal.commands);
             let help_command = _.find(Util.vorpal.commands, (cmd) => {
                 return cmd._name == "help";
             });
-            let found_comand;
-            if (msg) {
-                found_comand = _.find(Util.vorpal.commands, (cmd) => {
-                    return cmd._name == msg;
-                });
+            let args = Util.vorpal.util.buildCommandArgs(commandData.matchArgs, commandData.match, {
+                command: msg,
+                args: {},
+                callback: () => {},
+                session: null
+            }, true);
+            if (!msg) {
+                msg = "help";
             }
-            if (!found_comand || !msg) {
+            if (!commandData.match) {
                 Util.vorpal.log(`"${msg}" is a Invalid Command. Showing Help:`);
-                found_comand = help_command;
+                commandData.match = help_command;
+            }
+            try {
                 let vorpallog = (data: any) => {
                     socket!.emit('vorpal.log', data);
                 }
-                found_comand.log = vorpallog;
-            }      
-            try {
-                found_comand._fn.apply(found_comand, [[], () => {}]);
+                commandData.match.log = vorpallog;
+
+                commandData.match._fn.apply(commandData.match, [args, () => {
+                    socket!.emit('vorpal.done');
+                }]);
             } catch (e) {
                 socket!.emit('error', e);
             }
