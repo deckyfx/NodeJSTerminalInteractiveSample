@@ -3,7 +3,6 @@ import * as socketio from "socket.io";
 import * as path from 'path';
 import Util from '../../../Util';
 import _ = require('lodash');
-import { Exception } from 'winston';
 
 const publicdir: string = path.join(__dirname, 'public');
 const root = path.normalize(__dirname + '/../..');
