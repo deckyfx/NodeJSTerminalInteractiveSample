@@ -22,7 +22,6 @@ export default function socketroutes(app: Application): void {
 
         Util.vorpal.log(`Run features with ${Util.printValue("socket.emit(\"vorpal\", \"[COMMAND]\")")}`);
         Util.vorpal.log(`Answer prompt question with ${Util.printValue("socket.emit(\"prompt.answer\", \"[INDEX]\")")}`);
-
         socket.on('vorpal', (msg) => {
             // run vorpal commands
             var commandData = Util.vorpal.util.parseCommand(msg, Util.vorpal.commands);
@@ -54,6 +53,12 @@ export default function socketroutes(app: Application): void {
             } catch (e) {
                 socket!.emit('error', e);
             }
+        });
+        socket.on('vorpal.commands', () => {
+            let available_commands: Array<string> = _.map(Util.vorpal.commands, (cmd) => {
+                return cmd._name;
+            })
+            socket!.emit('vorpal.commands', JSON.stringify(available_commands));
         });
     });
 };
