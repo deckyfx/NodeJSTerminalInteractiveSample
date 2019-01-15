@@ -20,7 +20,8 @@ export default function socketroutes(app: Application): void {
             Util.ToggleSocketModeOff();
         });
 
-        Util.vorpal.log(`Run features with ${Util.printValue("socket.emit(\"vorpal\", \"[COMMAND]\")")}`);
+        Util.vorpal.log(`Get available commands with ${Util.printValue("socket.emit(\"vorpal.commands\")")}`);
+        Util.vorpal.log(`Run vorpal command with ${Util.printValue("socket.emit(\"vorpal\", \"[COMMAND]\")")}`);
         Util.vorpal.log(`Answer prompt question with ${Util.printValue("socket.emit(\"prompt.answer\", \"[INDEX]\")")}`);
         socket.on('vorpal', (msg) => {
             // run vorpal commands
