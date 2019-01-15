@@ -34,8 +34,6 @@ socket.on('connect', () => {
     socket.on('error', (data) => {
         console.warn(`${e}`);
     });
-
-    
 });
 
 socket.on('disconnect', (reason) => {
