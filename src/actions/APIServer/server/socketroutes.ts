@@ -23,7 +23,7 @@ export default function socketroutes(app: Application): void {
         Util.vorpal.log(`Get available commands with ${Util.printValue("socket.emit(\"vorpal.commands\")")}`);
         Util.vorpal.log(`Run vorpal command with ${Util.printValue("socket.emit(\"vorpal\", \"[COMMAND]\")")}`);
         Util.vorpal.log(`Answer prompt question with ${Util.printValue("socket.emit(\"prompt.answer\", \"[INDEX]\")")}`);
-        socket.on('vorpal', (msg) => {
+        socket.on('vorpal', (msg?: string) => {
             // run vorpal commands
             var commandData = Util.vorpal.util.parseCommand(msg, Util.vorpal.commands);
             let help_command = _.find(Util.vorpal.commands, (cmd) => {
@@ -38,6 +38,7 @@ export default function socketroutes(app: Application): void {
             if (!msg) {
                 msg = "help";
             }
+            msg = msg.trim();
             if (!commandData.match) {
                 Util.vorpal.log(`"${msg}" is a Invalid Command. Showing Help:`);
                 commandData.match = help_command;

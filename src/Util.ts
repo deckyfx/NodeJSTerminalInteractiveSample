@@ -16,8 +16,7 @@ const rjson = require('really-relaxed-json');
 import { XmlEntities } from "html-entities";
 import opn = require('opn');
 import * as socketio from "socket.io";
-import { InquirerAnswerBase } from "./repositories/hotelrepository/InquirerAnswer";
-import { Separator } from "inquirer";
+import { SocketHandler } from "./utils/SocketHandler";
 
 inquirer.registerPrompt('checkbox-plus', inquirer_cbp);
 
@@ -152,77 +151,6 @@ export class Util {
     }
 
     private constructor() {
-    }
-}
-
-    
-type PromptConfig = {};
-export class SocketHandler {
-    private static instance: SocketHandler;
-    private static socket: socketio.Socket;
-
-    static getInstance() {
-        if (!SocketHandler.instance) {
-            SocketHandler.instance = new SocketHandler();
-        }
-        return SocketHandler.instance;
-    }
-
-    public constructor() {
-    }
-
-    public setSocket(socket: socketio.Socket) {
-        SocketHandler.socket = socket;
-    }
-    
-    public vorpallog(data: any): void {
-        if (SocketHandler.socket) {
-            SocketHandler.socket!.emit('vorpal.log', data);
-        }
-    }
-    
-    public spinnerstart(): void {
-        if (SocketHandler.socket) {
-            SocketHandler.socket.emit('spinner', true);
-        }
-    }
-    
-    public spinnerstop(data: any): void {
-        if (SocketHandler.socket) {
-            SocketHandler.socket.emit('spinner', false);
-        }
-    }
-    
-    public opn(data: any): void {
-        if (SocketHandler.socket) {
-            SocketHandler.socket.emit('opn', data);
-        }
-    }
-    
-    public prompt<T extends InquirerAnswerBase<any>>(config: {
-        type?: string,
-        message?: string,
-        name?: string,
-        pageSize?: number,
-        default?: number,
-        choices?: Array<T | any>,
-        [key: string]: any
-    }): Promise<T> {
-        if (SocketHandler.socket) {
-            SocketHandler.socket.emit('prompt', JSON.stringify(config));
-        }
-        Util.getInstance().vorpal.log(config.message);
-        return new Promise<T>((resolve, reject) => {
-            // should wait for input
-            SocketHandler.socket.on('prompt.answer', (answer_idx: number) => {
-                let answer = config.choices![answer_idx];
-                Util.getInstance().vorpal.log(`Answer: ${JSON.stringify(answer)}`);
-                if (answer instanceof Separator) {
-                } else {
-                    resolve(answer);
-                }
-            });
-        });
     }
 }
 

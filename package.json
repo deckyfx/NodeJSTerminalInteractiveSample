@@ -18,7 +18,10 @@
     "copy-public-win": "bin\\copy-public-win.bat",
     "cleanbuild": "rm -r ./build/*",
     "movebuild": "mv ./build/src/* ./build/",
-    "start": "node ./build/index.js"
+    "start": "node ./build/index.js",
+
+    "browserify": "./node_modules/browserify/bin/cmd.js build/actions/APIServer/server/socket-client.js -o build/actions/APIServer/server/public/js/socket-client-browser.js",
+    "browserify-win": "node node_modules\\browserify\\bin\\cmd.js build\\actions\\APIServer\\server\\socket-client.js -o build\\actions\\APIServer\\server\\public\\js\\socket-client-browser.js"
   },
   "repository": {
     "type": "git",
@@ -60,6 +63,7 @@
     "@types/serve-index": "^1.7.29",
     "@types/serve-static": "^1.13.2",
     "@types/socket.io": "^2.1.2",
+    "@types/socket.io-client": "^1.4.32",
     "@types/sqlite3": "^3.1.3",
     "@types/uniqid": "^4.1.2",
     "@types/winston": "^2.3.9",
@@ -106,6 +110,8 @@
     "winston-daily-rotate-file": "^3.2.3"
   },
   "devDependencies": {
-    "@machinomy/types-readable-stream": "git+https://github.com/machinomy/types-readable-stream.git"
+    "@machinomy/types-readable-stream": "git+https://github.com/machinomy/types-readable-stream.git",
+    "@types/browserify": "^12.0.36",
+    "browserify": "^16.2.3"
   }
 }

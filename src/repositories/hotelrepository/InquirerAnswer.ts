@@ -9,17 +9,34 @@ import SabreImage from "../../models/SabreImage";
 import moment = require("moment");
 
 export abstract class InquirerAnswerBase<T> {
+    public _c: string = "InquirerAnswerBase";
+    public _vc: string = "";
     public constructor(public name?: string, public value?: T) {
+        this._c = (this as any).constructor.name;
+        if ((value as any).constructor) {
+            this._vc = (value as any).constructor.name;
+        } else {
+            this._vc = "native";
+        }
     }
 }
 
 export class InquirerConfirmAnswer extends InquirerAnswerBase<boolean> {
+    public constructor(public value?: boolean) {
+        super("", value);
+    }
 }
 
 export class InquirerIndexedAnswer extends InquirerAnswerBase<number> {
+    public constructor(public name?: string, public value?: number) {
+        super(name, value);
+    }
 }
 
 export class InquirerInputAnswer extends InquirerAnswerBase<string> {
+    public constructor(public value?: string) {
+        super("", value);
+    }
 }
 
 export class InquirerSelectHotelAnswer extends InquirerAnswerBase<SabreHotel | number> {
