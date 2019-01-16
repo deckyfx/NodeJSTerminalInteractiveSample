@@ -38,8 +38,8 @@ export class SocketClient {
         this.socket = io('http://localhost:3000');
 
         this.socket.on('connect', () => {
-            console.log(this.socket.connected); // true
-        
+            this.connected();
+
             this.socket.removeListener('vorpal.commands');
             this.socket.removeListener('vorpal.done');
             this.socket.removeListener('vorpal.log');
@@ -82,6 +82,7 @@ export class SocketClient {
         });
         
         this.socket.on('disconnect', (reason: any) => {
+            this.disconnected(reason);
             if (reason === 'io server disconnect') {
                 // the disconnection was initiated by the server, you need to reconnect manually
                 this.socket.removeListener('vorpal.commands');
@@ -145,8 +146,14 @@ export class SocketClient {
         this.socket.emit("vorpal", `${command} ${argv}`);
     }
 
-    public prompAnswer(answer: any): void {
+    public answerPrompt(answer: any): void {
         this.socket.emit("prompt.answer", answer);
+    }
+
+    private connected(): void {
+    }
+
+    private disconnected(reason: any): void {
     }
 
     private log(msg: string): void {
