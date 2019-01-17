@@ -158,6 +158,7 @@ export class SocketClient {
 
     private log(msg: string): void {
         // receive log
+        console.log(msg);
     }
 
     private commands(commands: Array<string>): void {

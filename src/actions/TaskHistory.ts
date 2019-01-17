@@ -131,7 +131,7 @@ export default class TaskHistory extends ActionBase {
                 }
             } else {
                 return Promise.reject(new Error('Invalid action'));
-            }                    
+            }
         });
     }
 
@@ -142,7 +142,7 @@ export default class TaskHistory extends ActionBase {
             Util.spinner.start();
             return new Promise<SabreHotel[]>((resolve, reject) => {
                 let search_condition = { $and: [ { sabreID : { $exists : true } }, { sabreName : { $exists : true } }, { city : { $exists : true } } ] };
-                mongo.models.Hotel!.find(search_condition, (e, docs) => {
+                mongo.models.SabreHotel!.find(search_condition, (e, docs) => {
                     if (e) return resolve([]);
                     return resolve(docs);
                 })

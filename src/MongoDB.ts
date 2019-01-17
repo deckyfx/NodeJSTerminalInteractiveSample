@@ -31,6 +31,7 @@ export class MongoDB {
     public models: MongoModelCollection = new MongoModelCollection();
 
     private static instance: MongoDB;
+    private useTunnelSSH: boolean = true;
 
     static getInstance() {
         if (!MongoDB.instance) {
@@ -83,36 +84,52 @@ export class MongoDB {
         password: MongoDB.SSH_TUNNEL_PASSWORD
     };
 
+    public useSSHTunnel(flag: boolean): MongoDB {
+        if (!flag) {
+            Util.vorpal.log(`Disable SSH Tunnel`);
+        } else {
+            Util.vorpal.log(`Enable SSH Tunnel`);
+        }
+        this.useTunnelSSH = flag;
+        return this;
+    }
+
     public connect(): Promise<MongoDB> {
-        return new Promise<MongoDB>((resolve, reject) => {
-            if (this.mongo.connection.readyState == 1) {
-                // vorpal.log(`Use established mongo connection`);
-                resolve(this);
-            } else {
-                Util.vorpal.log(`Establish mongo connection`);
-                Util.spinner.start();
-                if (MongoDB.SSH_TUNNEL_ENABLED) {
-                    Util.vorpal.log(`Tunneling via ssh`);
-                    this.tunnel = tunnel(this.ssh_config, (error: any, tunnel: any) => {
-                        if(error){
-                            Util.spinner.stop();
-                            reject(error);
-                        }
-                        this.connectMongo(resolve, reject);
-                    });
-                    this.tunnel.on('error', (e: any) => {
-                        Util.spinner.stop();
-                        Util.vorpal.log(`SSH Tunnel broken`);
-                        this.mongo.disconnect((e) => {
-                            if (e) Util.vorpal.log('Failed to end mongo connection');
-                        });
-                        throw(e);
-                    });
+        if (this.useTunnelSSH) {
+            return new Promise<MongoDB>((resolve, reject) => {
+                if (this.mongo.connection.readyState == 1) {
+                    // vorpal.log(`Use established mongo connection`);
+                    resolve(this);
                 } else {
-                    this.connectMongo(resolve, reject);
+                    Util.vorpal.log(`Establish mongo connection`);
+                    Util.spinner.start();
+                    if (MongoDB.SSH_TUNNEL_ENABLED) {
+                        Util.vorpal.log(`Tunneling via ssh`);
+                        this.tunnel = tunnel(this.ssh_config, (error: any, tunnel: any) => {
+                            if(error){
+                                Util.spinner.stop();
+                                reject(error);
+                            }
+                            this.connectMongo(resolve, reject);
+                        });
+                        this.tunnel.on('error', (e: any) => {
+                            Util.spinner.stop();
+                            Util.vorpal.log(`SSH Tunnel broken`);
+                            this.mongo.disconnect((e) => {
+                                if (e) Util.vorpal.log('Failed to end mongo connection');
+                            });
+                            throw(e);
+                        });
+                    } else {
+                        this.connectMongo(resolve, reject);
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            return new Promise<MongoDB>((resolve, reject) => {
+                this.connectMongo(resolve, reject);
+            });
+        }
     }
 
     private connectMongo(resolve: any, reject: any){
