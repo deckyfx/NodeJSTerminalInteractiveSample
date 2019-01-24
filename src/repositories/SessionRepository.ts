@@ -7,7 +7,11 @@ import Util from "../Util";
 import _ = require("lodash");
 import { InquirerConfirmAnswer } from "./hotelrepository/InquirerAnswer";
 
-type RequestConfig = Array<{ search?: string, tagtext?: string, data: string }>;
+type RequestConfig = Array<{ 
+    search?: string, 
+    tagtext?: string, 
+    data: string
+ }>;
 
 export default abstract class SessionRepository extends RepositoryBase {
     public static SESSION: SabreSession;
@@ -37,7 +41,12 @@ export default abstract class SessionRepository extends RepositoryBase {
     }
 
     private static readXML(file: string, configuration?: RequestConfig): string {
-        const xmls: { [key:string]: { file: string, action?: string } } = {
+        const xmls: { 
+            [key:string]: { 
+                file: string, 
+                action?: string 
+            } 
+        } = {
             "soap:request": {
                 file: "sabre_soap_request.xml"
             },
@@ -93,18 +102,18 @@ export default abstract class SessionRepository extends RepositoryBase {
         return request;
     }
 
-    public static request(file: string, configuration?: RequestConfig): Promise<JSDOM> {
+    public static request(file: string, configuration?: RequestConfig, promptRetry?: boolean): Promise<JSDOM> {
         let datastring = this.readXML(file, configuration);
         return SessionRepository.SessionIsValid()
         .then((valid) => {
             if (valid) {
                 datastring = SessionRepository.replaceTextInsideTag(datastring, 'wsse:BinarySecurityToken', SessionRepository.SESSION.BinarySecurityToken);                
-                return SessionRepository.doRequest(datastring);
+                return SessionRepository.doRequest(datastring, promptRetry);
             } else {
-                return this.createSession()
+                return this.createSession(promptRetry)
                 .then((session) => {
                     datastring = SessionRepository.replaceTextInsideTag(datastring, 'wsse:BinarySecurityToken', session.BinarySecurityToken);
-                    return SessionRepository.doRequest(datastring);
+                    return SessionRepository.doRequest(datastring, promptRetry);
                 });
             }
         });
@@ -149,7 +158,7 @@ export default abstract class SessionRepository extends RepositoryBase {
         });
     }
 
-    public static createSession(): Promise<SabreSession> {
+    public static createSession(promptRetry?: boolean): Promise<SabreSession> {
         let session = SessionRepository.loadTokenToFile();
         if (session != null) {
             SessionRepository.SESSION = session; 
@@ -170,7 +179,7 @@ export default abstract class SessionRepository extends RepositoryBase {
             tagtext: 'Domain',
             data: SessionRepository.SESSION_DOMAIN,
         }]);
-        return SessionRepository.doRequest(datastring)
+        return SessionRepository.doRequest(datastring, promptRetry)
         .then((dom) => {
             const document          = dom.window.document;
             const binary            = document.getElementsByTagName('wsse:BinarySecurityToken')[0].textContent!;
@@ -184,7 +193,7 @@ export default abstract class SessionRepository extends RepositoryBase {
         });
     }
 
-    public static doRequest(datastring: string): Promise<JSDOM> {
+    public static doRequest(datastring: string, promptRetry?: boolean): Promise<JSDOM> {
         Util.spinner.start();
         return rp({
             uri: SessionRepository.SESSION_URL,
@@ -204,14 +213,18 @@ export default abstract class SessionRepository extends RepositoryBase {
             });
         }).catch((err) => {
             Util.spinner.stop();
-            return this.handleRequestError(err)
-            .then((answer) => {
-                if (answer) {
-                    return this.doRequest(datastring);
-                } else {
-                    return Promise.reject(err);
-                }
-            });
+            if (promptRetry) {
+                return this.handleRequestError(err)
+                .then((answer) => {
+                    if (answer) {
+                        return this.doRequest(datastring);
+                    } else {
+                        return Promise.reject(err);
+                    }
+                });
+            } else {
+                return Promise.reject(err);
+            }
         });
     }
 

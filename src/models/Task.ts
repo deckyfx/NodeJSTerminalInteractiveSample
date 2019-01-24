@@ -86,6 +86,12 @@ export default class Task extends Backbone.Model {
     set searchcache(value: Array<any>) {
         this.set("searchcache", value)
     }
+    get rejectOnRequestFail(): boolean {
+        return this.get("rejectOnRequestFail")
+    }
+    set rejectOnRequestFail(value: boolean) {
+        this.set("rejectOnRequestFail", value)
+    }
 
     public constructor(attributes?: any, options?: any, _id?:string){
         super(attributes, options);
@@ -114,6 +120,7 @@ export default class Task extends Backbone.Model {
             forceMode: false,
             e: null,
             searchcache: new Array<any>(),
+            rejectOnRequestFail: false,
         };
     }
 
@@ -129,6 +136,7 @@ export default class Task extends Backbone.Model {
         this.set("success", false);
         this.set("hotelterms", this.get("hotelterms").splice(0, 1));
         this.set("cityterms", this.get("cityterms").splice(0, 1));
+        this.set("rejectOnRequestFail", false);
         return this;
     }
 

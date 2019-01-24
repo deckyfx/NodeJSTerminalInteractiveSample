@@ -8,6 +8,7 @@ import { Mongoose } from "mongoose";
 import Util from "./Util";
 import SabreImage, { SabreImageSchema } from "./models/SabreImage";
 import SabreSuite, { SabreSuiteSchema } from "./models/SabreSuite";
+import UpdateHotelTaskRequest, { UpdateHotelTaskRequestSchema }  from "./models/UpdateHotelTaskRequest";
 const tunnel = require('tunnel-ssh');
 
 export class MongoDB {
@@ -72,6 +73,8 @@ export class MongoDB {
         this.models.SabreHotel = this.mongo.model<SabreHotel>('SabreHotel', new this.mongo.Schema(newschema, { _id: false }));
         
         this.models.HotelsBak = this.mongo.model<SabreHotel>('HotelsBak', new this.mongo.Schema(newschema));
+        
+        this.models.UpdateHotelTaskRequest = this.mongo.model<UpdateHotelTaskRequest>('Hotel_Update_Request',  new this.mongo.Schema(UpdateHotelTaskRequestSchema.SCHEMA));
     }
 
     private ssh_config = {
@@ -163,6 +166,7 @@ class MongoModelCollection {
     public RateTaxes?: mongoose.Model<any>;
     public DescriptionChangeLog?: mongoose.Model<any>;
     public HotelsBak?: mongoose.Model<SabreHotel>;
+    public UpdateHotelTaskRequest?: mongoose.Model<UpdateHotelTaskRequest>;
 }
 
 export default MongoDB.getInstance(); // do something with the instance...

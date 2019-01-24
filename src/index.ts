@@ -58,8 +58,9 @@ export class Startup {
             .action(SearchHotel.build);
 
         Util.vorpal
-            .command('updatehotels <sabreID...>')
+            .command('updatehotels [sabreID...]')
             .description('Update hotel with sabreID#1, sabreID#2, ...')
+            .option('-f, --forever', 'Forever mode')
             .alias('update-hotels')
             .action(UpdateHotels.build);
 

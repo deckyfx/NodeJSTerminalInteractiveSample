@@ -3,11 +3,22 @@ import Util from "../../Util";
 import DataManager from "../../repositories/DataManager";
 import ActionBase from "./../ActionBase";
 import mongo, { MongoDB } from "../../MongoDB";
+import * as mongoose from "mongoose";
 import Task from "../../models/Task";
 import SabreHotel from "../../models/SabreHotel";
 import { resolve } from "bluebird";
 import _ = require("lodash");
 import HotelRepository from "../../repositories/HotelRepository";
+import UpdateHotelTaskRequest from "../../models/UpdateHotelTaskRequest";
+
+type CommandArgument = { 
+    [key:string]: any, 
+    sabreID?: Array<string>, 
+    options?: { 
+        [key:string]: any,
+        forever?: boolean,
+    } 
+}
 
 export default class UpdateHotels extends ActionBase {
     
@@ -15,7 +26,7 @@ export default class UpdateHotels extends ActionBase {
     private tasksProgress: number = 0;
     private tasksSize: number = 0;
 
-    static build(args: { [key:string]: any, sabreID: Array<string> }, next: Function): void {
+    static build(args: CommandArgument, next: Function): void {
         try {
             (new UpdateHotels(next, args)).run();
         } catch (e) {
@@ -24,13 +35,13 @@ export default class UpdateHotels extends ActionBase {
         }
     }
 
-    public constructor(public next: Function, public args?: { [key:string]: any, sabreID: Array<string> }) {
+    public constructor(public next: Function, public args?: CommandArgument) {
         super(next, args);
     }
 
     protected run(): number {
-        this.LoadTasksFromMongo(this.args!.sabreID)
-        .then(() => {
+        this.ParseRunMode()
+        .then((result) => {
             this.next();
         }).catch((e) => {
             console.log(e);
@@ -39,7 +50,23 @@ export default class UpdateHotels extends ActionBase {
         return 0;
     }
 
-    private LoadTasksFromMongo(sabreids: Array<string>): Promise<void> {
+    private ParseRunMode(): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            if (this.args!.sabreID) {
+                this.LoadHotelsFromMongo(this.args!.sabreID!)
+                .then(() => {
+                    resolve(true);
+                })
+            } else if (this.args!.options!.forever) {
+                this.GetUpdateRequest()
+                .then(() => {
+                    resolve(true);
+                })
+            }
+        })
+    }
+
+    private LoadHotelsFromMongo(sabreids: Array<string>): Promise<void> {
         return mongo.connect()
         .then((mongo: MongoDB) => {
             Util.vorpal.log(`Searching tasks from mongo DB`);
@@ -79,6 +106,77 @@ export default class UpdateHotels extends ActionBase {
         })
     }
 
+    private GetUpdateRequest(): Promise<boolean> {
+        return mongo.connect()
+        .then((mongo: MongoDB) => {
+            Util.vorpal.log(`Searching update tasks from mongo DB`);
+            Util.spinner.start();
+            return new Promise<Array<UpdateHotelTaskRequest>>((resolve, reject) => {
+                let search_condition = [{
+                    $lookup: {
+                        from: "sabrehotels",
+                        localField: "sabreID",
+                        foreignField: "sabreID",
+                        as: "aggregated_hotel"
+                    }
+                }];
+                mongo.models.UpdateHotelTaskRequest!.aggregate(search_condition, (e: any, docs: Array<UpdateHotelTaskRequest>) => {
+                    if (e) return resolve([]);
+                    return resolve(docs);
+                })
+            })
+        })
+        .then((update_tasks)=> {
+            Util.spinner.stop();
+            if (update_tasks.length == 0) {
+                // repeat
+                Util.vorpal.log(`No update task, repeat after delay 5 seconds`);
+                return new Promise<void>((resolve, reject) => {
+                    setTimeout(() => {
+                        resolve();
+                    }, 5000)
+                }).then(() => {
+                    return this.GetUpdateRequest();
+                })
+            } else {
+                Util.vorpal.log(`Found ${Util.printValue(update_tasks.length)} update task...`);
+                let result: Array<Task> = _.map(_.filter(update_tasks, (update_task) => {
+                    let _update_task = new mongo.models.UpdateHotelTaskRequest!(update_task);
+                    let hotels: Array<SabreHotel> = _update_task.get("aggregated_hotel") as Array<SabreHotel>;
+                    if (hotels) {
+                        if (hotels.length > 0) {
+                            return true;
+                        }
+                    }
+                }) as Array<UpdateHotelTaskRequest>,
+                (update_task) => {
+                    let task = new Task({}, null, "");
+                    task = task.reset();
+                    let _update_task = new mongo.models.UpdateHotelTaskRequest!(update_task);
+                    _update_task.set("_id", update_task._id);
+                    let hotels: Array<SabreHotel> = _update_task.get("aggregated_hotel") as Array<SabreHotel>;
+                    let hotel = new mongo.models.SabreHotel!(hotels[0]);
+                    hotel.set("_id", hotels[0]._id);
+                    task.setTaskFromMongo(hotel);
+                    task.set("mongoid", hotels[0]._id);
+                    task.set("_id", update_task._id);
+                    return task;
+                });
+                return Promise.resolve(result)
+                .then((tasks) => {
+                    this.tasksSize = tasks.length;
+                    Util.vorpal.log(`Executing ${Util.printValue(this.tasksSize)} tasks`);
+                    return Util.SequencePromises<Task, Task>(tasks, this.SearchHotelBridgeThenRemoveUpdateTask.bind(this))
+                    .then((tasks) => {
+                        // repeat
+                        Util.vorpal.log(`Done, repeat`);
+                        return this.GetUpdateRequest();
+                    });
+                })
+            }
+        })
+    }
+
     private SearchHotelBridge(_task: Task): Promise<Task> {
         let task = new Task(_task.toJSON(), null, _task.get("_id"));
         Util.vorpal.log(Util.boxen(`${this.tasksProgress}/${this.tasksSize}\tRun task: "${Util.printValue(task.get("_id"))}" ` +
@@ -89,10 +187,44 @@ export default class UpdateHotels extends ActionBase {
             Util.vorpal.log(" ");
             Util.vorpal.log(" ");
             this.tasksProgress += 1;
-        })
-        .catch((task) => {
-            this.tasksProgress += 1;
             return Promise.resolve(task);
+        })
+        .catch((e) => {
+            this.tasksProgress += 1;
+            return Promise.resolve(_task);
+        })
+    }
+
+    private SearchHotelBridgeThenRemoveUpdateTask(_task: Task): Promise<Task> {
+        let task = new Task(_task.toJSON(), null, _task.get("_id"));
+        task.set("rejectOnRequestFail", true);
+        Util.vorpal.log(Util.boxen(`${this.tasksProgress}/${this.tasksSize}\tRun task: "${Util.printValue(task.get("_id"))}" ` +
+            `hotel: "${Util.printValue(_.first(task.get("hotelterms")!) as string)}" ` +
+            `city: "${Util.printValue(_.first(task.get("cityterms")!) as string)}" `));
+        return this.HotelRepository.RunSearchHotelTask(task)
+        .then((task) => {
+            Util.vorpal.log(" ");
+            Util.vorpal.log(" ");
+            this.tasksProgress += 1;
+            Util.vorpal.log(`Removing update task ${task.get("_id")}`);
+            return new Promise<Task>((resolve, reject) => {
+                mongo.models.UpdateHotelTaskRequest!.remove({ _id: task.get("_id") }, (err) => {
+                    if (err) {
+                        Util.vorpal.log(`Failed to remove update task`, err);
+                    } else {
+                        Util.vorpal.log(`Update task removed`);
+                    }
+                    resolve(task);
+                });
+            })
+        })
+        .catch((e) => {
+            this.tasksProgress += 1;
+            return mongo.models.UpdateHotelTaskRequest!.update({ _id: task.get("_id") }, {
+                e: e 
+            }, (err) => {
+                Util.vorpal.log(`Failed to update update task contains error`);
+            })
         })
     }
 }

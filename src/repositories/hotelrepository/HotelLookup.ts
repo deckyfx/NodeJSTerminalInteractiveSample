@@ -188,7 +188,7 @@ export default class HotelLookup {
         }, {
             search: "CHECKOOUT_DATE",
             data: end_date,
-        }])
+        }], task.get("rejectOnRequestFail")? false:true)
         .then((dom: JSDOM) => {
             Util.spinner.start();
             let results = this.ParseHotelAvailibility(dom);
@@ -239,7 +239,7 @@ export default class HotelLookup {
         }, {
             search: "IMAGE_SIZE",
             data: "ORIGINAL" // THUMBNAIL, SMALL, MEDIUM, LARGE 
-        }])
+        }], task.get("rejectOnRequestFail")? false:true)
         .then((dom: JSDOM) => {
             const document = dom.window.document;
             let nsregex = /\<(ns\d{1,2})\:HotelContentInfo\>/gi.exec(dom.serialize());
@@ -330,7 +330,7 @@ export default class HotelLookup {
         }, {
             search: "CHECKOOUT_DATE",
             data: end_date,
-        }])
+        }], task.get("rejectOnRequestFail")?  false:true)
         .then((dom: JSDOM) => {
             const document = dom.window.document;
             let basicinfo = document.getElementsByTagName('BasicPropertyInfo')[0];
