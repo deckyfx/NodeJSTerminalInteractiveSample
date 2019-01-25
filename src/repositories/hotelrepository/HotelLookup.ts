@@ -45,7 +45,6 @@ export default class HotelLookup {
                 })
             }
         })
-        
         .then((task) => {
             return this.GetHotelDetail(task);
         })

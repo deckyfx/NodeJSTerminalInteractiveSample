@@ -1,12 +1,9 @@
 
 import Util from "../../Util";
-import DataManager from "../../repositories/DataManager";
 import ActionBase from "./../ActionBase";
 import mongo, { MongoDB } from "../../MongoDB";
-import * as mongoose from "mongoose";
 import Task from "../../models/Task";
 import SabreHotel from "../../models/SabreHotel";
-import { resolve } from "bluebird";
 import _ = require("lodash");
 import HotelRepository from "../../repositories/HotelRepository";
 import UpdateHotelTaskRequest from "../../models/UpdateHotelTaskRequest";
@@ -17,6 +14,7 @@ type CommandArgument = {
     options?: { 
         [key:string]: any,
         forever?: boolean,
+        add?: boolean,
     } 
 }
 
@@ -69,22 +67,35 @@ export default class UpdateHotels extends ActionBase {
     private LoadHotelsFromMongo(sabreids: Array<string>): Promise<void> {
         return mongo.connect()
         .then((mongo: MongoDB) => {
-            Util.vorpal.log(`Searching tasks from mongo DB`);
-            Util.spinner.start();
-            return new Promise<Array<SabreHotel>>((resolve, reject) => {
-                let _sabreids: Array<String> = _.map(sabreids, (sabreid) => {
-                    return new String(sabreid);
-                });
-                let search_condition = { $and: [ 
-                    { sabreID : { $exists : true } }, 
-                    { sabreName : { $exists : true } }, 
-                    { city : { $exists : true } },
-                    { sabreID: { $in: _sabreids } } ] };
-                mongo.models.SabreHotel!.find(search_condition, (e, docs) => {
-                    if (e) return resolve([]);
-                    return resolve(docs);
+            let _sabreids: Array<String> = _.map(sabreids, (sabreid) => {
+                return new String(sabreid);
+            });
+
+            if (this.args!.options!.add) {
+                Util.vorpal.log(`Try to Add new hotels`);
+                let hotels: Array<SabreHotel> = _.map(_sabreids, (_sabreid) => {
+                    let hotel = new mongo.models.SabreHotel!();
+                    hotel.set("sabreID", _sabreid);
+                    hotel.set("sabreName", `Hotel name Temp: ${_sabreid}`);
+                    hotel.set("city", `City name Temp: ${_sabreid}`);
+                    return hotel;
                 })
-            })
+                return Promise.resolve(hotels);
+            } else {                
+                Util.vorpal.log(`Searching tasks from mongo DB`);
+                Util.spinner.start();
+                return new Promise<Array<SabreHotel>>((resolve, reject) => {
+                    let search_condition = { $and: [ 
+                        { sabreID : { $exists : true } }, 
+                        { sabreName : { $exists : true } }, 
+                        { city : { $exists : true } },
+                        { sabreID: { $in: _sabreids } } ] };
+                    mongo.models.SabreHotel!.find(search_condition, (e, docs) => {
+                        if (e) return resolve([]);
+                        return resolve(docs);
+                    })
+                })
+            }
         })
         .then((hotels)=> {
             Util.spinner.stop();

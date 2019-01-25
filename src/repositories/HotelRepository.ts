@@ -19,7 +19,7 @@ export default class HotelRepository extends SessionRepository {
     public RunSearchHotelTask(task: Task, force?: boolean): Promise<Task> {
         return Promise.resolve()
         .then(() => {
-            if (!force ) {
+            if (!force) {
                 return Promise.resolve(task)
             } else {
                 return (new TaskHistory()).LookupTask(task)

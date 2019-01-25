@@ -61,6 +61,7 @@ export class Startup {
             .command('updatehotels [sabreID...]')
             .description('Update hotel with sabreID#1, sabreID#2, ...')
             .option('-f, --forever', 'Forever mode')
+            .option('-a, --add', 'Add new hotel')
             .alias('update-hotels')
             .action(UpdateHotels.build);
 
