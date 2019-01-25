@@ -6,6 +6,7 @@ import CityLookup from "./hotelrepository/CityLookup";
 import HotelLookup from "./hotelrepository/HotelLookup";
 import SaveHotelToMongo from "./hotelrepository/SaveHotelToMongo";
 import MongoCityLookup from "./hotelrepository/MongoCityLookup";
+import * as _ from "lodash";
 
 export default class HotelRepository extends SessionRepository {
 
@@ -45,6 +46,16 @@ export default class HotelRepository extends SessionRepository {
                                     throw e;
                                 });
                             });
+                        })
+                        .then((task) => {
+                            if (task.mongoHotel) {
+                                console.log(task.hotel.get("city"));
+                                if (_.startsWith(task.mongoHotel!.get("sabreName"), "Hotel name Temp:")) {
+                                    Util.vorpal.log(`${Util.printWarning()} Need to resolve city!`);
+                                    return (new MongoCityLookup()).LookupMongoCity(task);
+                                }
+                            }
+                            return Promise.resolve(task);
                         })
                         .then((task) => {
                             resolve(task);

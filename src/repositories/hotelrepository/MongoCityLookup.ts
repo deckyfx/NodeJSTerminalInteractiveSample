@@ -4,6 +4,9 @@ import mongo, { MongoDB } from "../../MongoDB";
 import { InquirerSelectMongoCityAnswer, InquirerInputAnswer } from "./InquirerAnswer";
 import * as _ from "lodash";
 import SabreCity from "../../models/SabreCity";
+import CityLookup from "./CityLookup";
+import CityRepository from "../CityRepository";
+import LocationRepository from "../LocationRepository";
 
 export default class MongoCityLookup {
     public constructor() {
@@ -32,23 +35,28 @@ export default class MongoCityLookup {
         }
     }
 
-    private LookupMongoCityOnline(task: Task): Promise<Task> {
-        Util.vorpal.log(`Search mongo City "${Util.printValue(task.city.name!)}"`);
+    private LookupMongoCityOnline(task: Task): Promise<Task> {        
         return mongo.connect()
         .then((mongo: MongoDB) => {
-            Util.spinner.start();
             return new Promise<Task>((resolve, reject) => {
-                let search_condition: any;
-                if (task.mongoCity) {
-                    search_condition = { _id: task.mongoCity };
+                if (task.city) {
+                    Util.vorpal.log(`Search mongo City "${Util.printValue(task.city.name!)}"`);
+                    Util.spinner.start();
+                    let search_condition: any;
+                    if (task.mongoCity) {
+                        search_condition = { _id: task.mongoCity };
+                    } else {
+                        search_condition = { $or:[{ name: new RegExp(task.city.name!, "i") }, { alias: { $elemMatch: { code: new RegExp(task.city.iata!, "i") } } } ] };
+                    }
+                    mongo.models.City!.find(search_condition, (e, docs) => {
+                        task.searchcache = docs;
+                        if (e) return resolve(task);
+                        return resolve(task);
+                    })
                 } else {
-                    search_condition = { $or:[{ name: new RegExp(task.city.name!, "i") }, { alias: { $elemMatch: { code: new RegExp(task.city.iata!, "i") } } } ] };
-                }
-                mongo.models.City!.find(search_condition, (e, docs) => {
-                    task.searchcache = docs;
-                    if (e) return resolve(task);
+                    task.searchcache = [];
                     return resolve(task);
-                })
+                }
             })
         })
         .then((task)=> {
@@ -96,8 +104,15 @@ export default class MongoCityLookup {
                     message = "What would yo do?";
                 }
                 choices.push(new Util.inquirer.Separator());
-                choices.push(new InquirerSelectMongoCityAnswer(`Input "city._id" manualy`, -1));
-                choices.push(new InquirerSelectMongoCityAnswer(`Re-search using "${task.city.name} (${task.city.iata})"`, -2));
+                choices.push(new InquirerSelectMongoCityAnswer(`Input mongo "city._id" manualy`, -1));
+                if (task.city) {
+                    choices.push(new InquirerSelectMongoCityAnswer(`Re-search using "${task.city.name} (${task.city.iata})"`, -2));
+                } else {
+                    if (task.hotel.get("city")) {
+                        choices.push(new InquirerSelectMongoCityAnswer(`Re-search using city IATA "${task.hotel.get("city")}"`, -3));
+                    }
+                    choices.push(new InquirerSelectMongoCityAnswer(`Re-search city`, -4));
+                }
                 choices.push(new Util.inquirer.Separator());
                 return Util.prompt<InquirerSelectMongoCityAnswer>({
                     type: 'list',
@@ -111,6 +126,21 @@ export default class MongoCityLookup {
                     if ( typeof(val) === "number" ) {
                         let choice = val as number;
                         switch (choice) {
+                            case -4: {
+                                let citylookupinterface = new CityLookup();
+                                return citylookupinterface.LookupCity(task, true)
+                                .then(() => {
+                                    return this.LookupMongoCityOnline(task)
+                                })
+                            } break;
+                            case -3: {
+                                task.cityterms = [ task.hotel.get("city") ];
+                                let citylookupinterface = new CityLookup();
+                                return citylookupinterface.LookupCity(task)
+                                .then(() => {
+                                    return this.LookupMongoCityOnline(task)
+                                })
+                            } break;
                             case -2: {
                                 return this.LookupMongoCityOnline(task);
                             } break;

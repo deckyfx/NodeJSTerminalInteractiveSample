@@ -1,13 +1,13 @@
 import Task from "../../models/Task";
 import Util from "../../Util";
-import MongoCityLookup from "./MongoCityLookup";
 import mongo, { MongoDB } from "../../MongoDB";
+import * as mongoose from "mongoose";
+import { Document } from "mongoose";
 import * as _ from "lodash";
 import { InquirerSelectHotelAnswer, InquirerInputAnswer } from "./InquirerAnswer";
 import SabreHotel from "../../models/SabreHotel";
 import SabreSuite, { DescriptionChangeLog } from "../../models/SabreSuite";
 import moment = require("moment");
-import { Model } from "mongoose";
 
 export default class SaveHotelToMongo {
     public constructor() {
@@ -62,17 +62,30 @@ export default class SaveHotelToMongo {
     private SaveOrUpdateHotel(task: Task): Promise<Task> {
         return this.LookupMongoHotel(task)        
         .then((task) => {
-            if (!task.mongoHotel) {
+            if (!task.mongoHotel || task.mongoHotel.isNew) {
                 Util.vorpal.log(`${Util.printWarning()} Hotel not found, creating new`);
                 return new Promise<Task>((resolve, reject) => {
                     task.hotel!.set('name', task.hotel!.get('sabreName'));
-                    task.hotel!.save((e, doc) => {
-                        if (e) return reject(e);
-                        task.mongoid = doc._id;
-                        return resolve(task);
-                    });
-                });
+                    let savehotel: SabreHotel | Document;
+                    if (MongoDB.BYPASS_SABREHOTELS) {
+                        savehotel = new mongo.models.Hotel!(task.hotel.toJSON());
+                        (savehotel as Document).save((e: any, doc: mongoose.Document) => {
+                            if (e) reject(e);
+                            task.mongoid = doc._id;
+                            resolve(task);
+                        });
+                    } else {
+                        savehotel = task.hotel!;
+                        (savehotel as SabreHotel).save((e: any, doc: mongoose.Document) => {
+                            if (e) reject(e);
+                            task.mongoid = doc._id;
+                            resolve(task);
+                        });
+                    }
+                })
             }
+            console.log(task.mongoHotel);
+            console.log(task.mongoHotel.get("sabreID"), task.mongoHotel.get("sabreName"), task.mongoHotel.isNew);
             Util.vorpal.log(`${Util.printInfo()} Hotel found ${Util.printValue(task.mongoHotel.get("name"))} ` +
                 `(${Util.printValue(task.mongoHotel._id)}), updating`);
                 
@@ -310,11 +323,19 @@ export default class SaveHotelToMongo {
                 if (task.mongoid) {
                     searchcondition = { _id: task.mongoid };
                 }
-                mongo.models.SabreHotel!.find(searchcondition, (e, docs) => {    
-                    task.searchcache = docs;
-                    if (e) return resolve(task);
-                    return resolve(task);
-                })
+                if (MongoDB.BYPASS_SABREHOTELS) {
+                    mongo.models.Hotel!.find(searchcondition, (e, docs) => {
+                        task.searchcache = docs;
+                        if (e) return resolve(task);
+                        return resolve(task);
+                    });
+                } else {
+                    mongo.models.SabreHotel!.find(searchcondition, (e, docs) => {    
+                        task.searchcache = docs;
+                        if (e) return resolve(task);
+                        return resolve(task);
+                    })
+                }
             })
         })
         .then((task) => {
