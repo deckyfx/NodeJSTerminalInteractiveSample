@@ -19,7 +19,6 @@
     "cleanbuild": "rm -r ./build/*",
     "movebuild": "mv ./build/src/* ./build/",
     "start": "node ./build/index.js",
-
     "browserify": "./node_modules/browserify/bin/cmd.js build/actions/APIServer/server/socket-client.js -o build/actions/APIServer/server/public/js/socket-client-browser.js",
     "browserify-win": "node node_modules\\browserify\\bin\\cmd.js build\\actions\\APIServer\\server\\socket-client.js -o build\\actions\\APIServer\\server\\public\\js\\socket-client-browser.js"
   },
@@ -106,6 +105,7 @@
     "typescript": "^2.9.2",
     "uniqid": "^5.0.3",
     "vorpal": "^1.12.0",
+    "vorpal-autocomplete-fs": "0.0.3",
     "winston": "^3.0.0",
     "winston-daily-rotate-file": "^3.2.3"
   },

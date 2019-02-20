@@ -14,6 +14,10 @@ import Cleanup from "./Cleanup";
 import SessionRepository from "./repositories/SessionRepository";
 import APIServer from "./actions/APIServer/APIServer";
 import UpdateHotels from "./actions/UpdateHotels/UpdateHotels";
+import PriceChecker from "./actions/PriceChecker/PriceChecker";
+
+
+const fsAutocomplete = require('vorpal-autocomplete-fs');
 
 export class Startup {
     private static ENABLE_SSH: boolean = true;
@@ -112,6 +116,13 @@ export class Startup {
             .description('Start API Server')
             .alias('api-server')
             .action(APIServer.build);
+
+        Util.vorpal
+            .command('pricecheck <xmlfile> <jsonfile>')
+            .description('Price checker')
+            .autocomplete(fsAutocomplete())
+            .alias('price-check')
+            .action(PriceChecker.build);
 
         Util.vorpal
             .command('test')

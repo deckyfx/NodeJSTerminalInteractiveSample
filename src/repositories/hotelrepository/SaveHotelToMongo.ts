@@ -148,7 +148,7 @@ export default class SaveHotelToMongo {
     }
 
     private MergeSuites(oldsuites: Array<SabreSuite>, newsuites: Array<SabreSuite>): Array<SabreSuite> {
-        let result: Array<SabreSuite> = [];
+        let allsuites: Array<SabreSuite> = [];
 
         let d: number = 0;
         let e: number = 0;
@@ -211,13 +211,13 @@ export default class SaveHotelToMongo {
                 _.forEach(watchpath, (keypath) => {
                     let value: any;
                     if (keypath.includes(".")) {
-                        let keypaths = keypath.split(".");
-                        value = found.get(keypaths[0]).get(keypaths[1]);
-                        let tempobj = oldsuite.get(keypaths[0]);
+                        let keypaths    = keypath.split(".");
+                        value           = found.get(keypaths[0]).get(keypaths[1]);
+                        let tempobj     = oldsuite.get(keypaths[0]);
                         tempobj.set(keypaths[1], value);
                         oldsuite.set(keypaths[0], tempobj);
                     } else {
-                        value = found.get(keypath);
+                        value           = found.get(keypath);
                         oldsuite.set(keypath, value);
                     }
                 });
@@ -259,14 +259,28 @@ export default class SaveHotelToMongo {
         }) as Array<SabreSuite>;
 
         // join both arrays
-        result = _.concat(oldsuites, newsuites);
+        allsuites = _.concat(oldsuites, newsuites);
+
+        // final step remove unnecesary fields
+        let removefields: Array<string> = [
+            "tax",
+            "total_rate_tax",
+            "total_rate",
+            "duration",
+        ];
+        allsuites = _.map(allsuites, (allsuite) => {
+            _.forEach(removefields, (key) => {
+                allsuite.set(key, undefined);
+            });
+            return allsuite;
+        });
 
         Util.vorpal.log(`${Util.printInfo()} ${Util.printValue(e)} suite(s) enabled, ` +
             `${Util.printValue(d)} suite(s) disabled, ` + 
             `${Util.printValue(r)} invalid suite(s) removed, ` + 
             `${Util.printValue(newsuites.length)} new suite(s) added`);
 
-        return result;
+        return allsuites;
     }
 
     private CompareAndCreateSuiteChangeLog(keypath: string, oldsuite: SabreSuite, newsuite: SabreSuite): DescriptionChangeLog | null {

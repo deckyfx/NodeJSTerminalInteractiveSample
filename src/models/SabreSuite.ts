@@ -24,6 +24,13 @@ export default interface SabreSuite extends Document {
     verified?: boolean;
     verivied_at?: Date;
     changes_log?: Array<DescriptionChangeLog>;
+
+    // this field is read only not to be stored in mongo
+    // this field obtained values in PriceCheck after loaded json data
+    tax?: number,
+    total_rate_tax?: number,
+    total_rate?: number,
+    duration?: number
 }
 
 export class SuiteCancelPolicy {
@@ -92,6 +99,13 @@ export class SabreSuiteSchema {
         created_at: Date,
         verified: Boolean,
         verivied_at: Date,
-        changes_log: [DescriptionChangeLog]
+        changes_log: [DescriptionChangeLog],
+
+        // this field is read only not to be stored in mongo
+        // this field obtained values in PriceCheck after loaded json data
+        tax: Number,
+        total_rate_tax: Number,
+        total_rate: Number,
+        duration: Number
     };    
 }

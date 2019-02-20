@@ -9,6 +9,7 @@ import { JSDOM } from "jsdom";
 import mongo, { MongoDB } from "../../MongoDB";
 import SabreImage from "../../models/SabreImage";
 import moment = require("moment");
+import SabreSuite from "../../models/SabreSuite";
 
 export default class HotelLookup {
     public constructor() {
@@ -229,6 +230,184 @@ export default class HotelLookup {
         return results;
     }
 
+    private ParseHotelDetail(dom: JSDOM): Array<SabreHotel> {
+        const document = dom.window.document;
+        let nsregex = /\<(ns\d{1,2})\:HotelContentInfo\>/gi.exec(dom.serialize());
+        if (!nsregex) {
+            throw new Error("Namespace not found!");
+        }
+        let ns = nsregex![1];
+        Util.vorpal.log(`Using name space ${Util.printValue(ns)} to parse data`);
+        let hotels = document.getElementsByTagName(`${ns}:HotelContentInfo`);
+        let results: Array<SabreHotel> = new Array<SabreHotel>();
+        for (let hotel of hotels) {
+            let result = new mongo.models.SabreHotel!();
+            let id = mongo.mongo.Types.ObjectId();
+            result.set(`_id`, id);
+            let hotelbasic = document.getElementsByTagName(`${ns}:HotelInfo`)[0];
+            result.set(`sabreID`, hotelbasic.getAttribute('HotelCode'));
+            result.set(`sabreName`, hotelbasic.getAttribute('HotelName'));
+            result.set(`sabreChainName`, hotelbasic.getAttribute('ChainName'));
+            result.set(`logo`, hotelbasic.getAttribute('Logo'));
+            result.set(`loc`, [hotelbasic.getAttribute('Longitude'), hotelbasic.getAttribute('Latitude')]);
+            let address = new Array<string>();
+            let address_comp = hotel.getElementsByTagName(`${ns}:AddressLine1`)[0];
+            address_comp? address.push(address_comp.textContent!) : void(0);
+            address_comp = hotel.getElementsByTagName(`${ns}:CityName`)[0];
+            address_comp? address.push(address_comp.textContent!) : void(0);
+            address_comp = hotel.getElementsByTagName(`${ns}:PostalCode`)[0];
+            address_comp? address.push(address_comp.textContent!) : void(0);
+            address_comp = hotel.getElementsByTagName(`${ns}:AddressLine1`)[0];
+            if (address_comp) {
+                let code = address_comp.getAttribute('Code')!
+                let cdata = Util.country.lookup.countries({alpha2: code});
+                address.push((cdata.length > 0)? cdata[0].name: '');
+            }
+            result.set(`address`, address.join(', '));
+            let imageselements = document.getElementsByTagName(`${ns}:Image`);
+            let images: Array<SabreImage> = new Array<SabreImage>();
+            for (let imageelement of imageselements) {
+                let image = new mongo.models.SabreImage!();
+                let url = imageelement.getAttribute('Url');
+                image.set(`url`, url);
+                image.set(`filename`, url!.substr(url!.lastIndexOf('/') + 1));
+                images.push(image);
+            };
+            result.set(`images`, images);
+            // constant data
+            result.set(`groups`, [ "st" ]);
+            result.set(`code`, "ABC");
+            result.set(`city`, "??");
+            let hoteldescription = document.getElementsByTagName(`${ns}:HotelDescriptiveInfo`)[0];
+            let hotelmedia = document.getElementsByTagName(`${ns}:HotelMediaInfo`)[0];
+            results.push(result);
+        }
+        return results;
+    }
+
+    public ParseHotelPropertyDescription(task: Task, dom: JSDOM): Task {
+        const document = dom.window.document;
+        let basicinfo = document.getElementsByTagName('BasicPropertyInfo')[0];
+        let roomrates = document.getElementsByTagName('RoomRate');
+        let results: Array<SabreSuite> = new Array<SabreSuite>();
+        const description_texts = basicinfo.querySelectorAll("VendorMessages Description Text");
+        let description_text = new Array<string>();
+        for (let text of description_texts) {
+            let _text = text.textContent!.toLowerCase();
+            description_text.push(_text!.charAt(0).toUpperCase() + _text.slice(1));
+        }
+        task.hotel!.set('description', description_text.join(" "));
+        let hotel_tax_tag = basicinfo.querySelector("Taxes Text");
+        if (hotel_tax_tag) {
+            let hotel_tax = hotel_tax_tag.textContent!.match(/\d+/);
+            if (hotel_tax) {
+                task.hotel!.set(`taxes`, parseFloat(hotel_tax[0]));
+            }
+        }
+        for (let roomrate of roomrates) {
+            let rate = roomrate.querySelector('Rate[CurrencyCode=USD]');
+            let result = new mongo.models.SabreSuite!();
+            result.set("sabreID", roomrate.getAttribute('IATA_CharacteristicIdentification')!);
+            result.set("IATA", roomrate.getAttribute('IATA_ProductIdentification')!);
+            result.set("name", result.IATA);
+            let suite_descriptions: any;
+            suite_descriptions = roomrate.querySelectorAll("AdditionalInfo > Text");
+            let suite_description = new Array<string>();
+            for (let description of suite_descriptions) {
+                let _text = description.textContent!.toLowerCase();
+                suite_description.push((_text!.charAt(0).toUpperCase() + _text.slice(1)).trim());
+            }
+            result.set("description", suite_description.join(" "));
+            let cancel_policy_tag = roomrate.querySelector("AdditionalInfo > CancelPolicy");
+            let cancel_policy = new mongo.models.RateCancelPolicy!();
+            if (cancel_policy_tag != null) {
+                cancel_policy.set("numeric", parseInt(cancel_policy_tag!.getAttribute("Numeric")!, undefined));
+                cancel_policy.set("option", cancel_policy_tag!.getAttribute("Option")!);
+                cancel_policy.set("description", cancel_policy_tag!.textContent!);
+                result.set("cancel_policy", cancel_policy);
+            }
+            let commission_tag = roomrate.querySelector("AdditionalInfo > Commission");
+            let commission = new mongo.models.RateCommission!();
+            if (commission_tag != null) {
+                commission.set("enabled", commission_tag!.getAttribute("NonCommission") == "false");
+                commission.set("description", commission_tag!.textContent!);
+                result.set("commission", commission);
+            }
+            let dca_cancelation_tag = roomrate.querySelector("AdditionalInfo > DCA_Cancelation");
+            if (dca_cancelation_tag != null) {
+                result.set("dca_cancelation", dca_cancelation_tag!.textContent!);
+            }
+            let rate_with_tax_tag = rate!.querySelector("HotelTotalPricing");
+            let rate_with_tax = new mongo.models.RateTaxes!();
+            if (rate_with_tax_tag != null) {
+                rate_with_tax.set("total_rate", parseFloat(rate_with_tax_tag.getAttribute("Amount")!));
+                let disclaimer_tag = rate_with_tax_tag!.querySelector("Disclaimer");
+                if (disclaimer_tag) rate_with_tax.set("disclaimer", disclaimer_tag.textContent!);
+                let surcharges_tag = rate_with_tax_tag!.querySelector("TotalSurcharges");
+                if (surcharges_tag) rate_with_tax.set("surcharges", parseFloat(surcharges_tag.getAttribute("Amount")!));
+                let taxes_tag = rate_with_tax_tag!.querySelector("TotalTaxes");
+                if (taxes_tag) rate_with_tax.set("taxes", parseFloat(taxes_tag.getAttribute("Amount")!));
+                result.set("taxes", rate_with_tax);
+
+                let date_range_tags = rate_with_tax_tag.querySelectorAll("RateRange");
+                if (date_range_tags.length > 0) {
+                    let total_price_in_date_range = 0;
+                    let duration = 0;
+                    for (let date_range_tag of date_range_tags) {
+                        let date_range_amount       = parseFloat(date_range_tag.getAttribute("Amount")!);
+                        let date_range_surcharges   = parseFloat(date_range_tag.getAttribute("Surcharges")!);
+                        let date_range_taxes        = parseFloat(date_range_tag.getAttribute("Taxes")!);
+                        let date_range_startdate    = `2019-${date_range_tag.getAttribute("EffectiveDate")}` ;
+                        let date_range_enddate      = `2019-${date_range_tag.getAttribute("ExpireDate")}`;
+                        duration                    = moment(date_range_startdate).diff(moment(date_range_enddate), 'days');
+                        total_price_in_date_range   += Math.abs(duration) * date_range_amount;
+                    }
+                    result.set("total_rate",        total_price_in_date_range);
+                    result.set("total_rate_tax",    rate_with_tax.get("total_rate"));
+                    result.set("tax",               rate_with_tax.get("total_rate") - total_price_in_date_range);
+                    result.set("duration",  Math.abs(duration));
+                } else {
+                    let timespan_tag = document.getElementsByTagName('TimeSpan')[0];
+                    if (timespan_tag) {
+                        let timespan_start_date     = timespan_tag.getAttribute("Start")!;
+                        let timespan_end_date       = timespan_tag.getAttribute("End")!;
+                        let duration                = moment(timespan_start_date).diff(moment(timespan_end_date), 'days');
+                        let total_rate              = parseFloat(rate!.getAttribute('Amount')!);
+                        let total_price_in_date_range   = total_rate * Math.abs(duration);
+                        result.set("total_rate",    total_price_in_date_range );
+                        result.set("total_rate_tax", rate_with_tax.get("total_rate"));
+                        result.set("tax",           rate_with_tax.get("total_rate") - total_price_in_date_range);
+                        result.set("duration",      Math.abs(duration));
+                    }
+                }
+            }
+            result.set("rate", parseFloat(rate!.getAttribute('Amount')!));
+            result.set("discounts", []);
+            result.set("images", []);
+            result.set("facilities", []);
+            result.set("is_visible", true);
+            result.set("is_available", true);
+            result.set("is_deleted", false);
+            if (commission.get("enabled")) {
+                results.push(result);
+            }
+            let currenttime = moment(moment.now()).toDate();
+            result.set("changes_log", []);
+            result.set("created_at", currenttime);
+            result.set("verified", false);
+        }
+        // Sort by hotel rate
+        results = _.sortBy(results, ["rate"], ["asc"]);       
+            
+        // only get 1
+        // results = results.slice(0, 1);
+        task.hotel!.set('suites', results);
+        
+        task.hotel!.set(`city`, basicinfo.getAttribute("HotelCityCode"));
+
+        return task;
+    }
+
     private GetHotelDetail(task: Task): Promise<Task> {
         let sabreID = task.hotel? task.hotel!.get("sabreID") : task.get("sabreID");
         Util.vorpal.log(`Get detail for hotel with sabreID: ${Util.printValue(sabreID)}`);
@@ -240,57 +419,7 @@ export default class HotelLookup {
             data: "ORIGINAL" // THUMBNAIL, SMALL, MEDIUM, LARGE 
         }], task.get("rejectOnRequestFail")? false:true)
         .then((dom: JSDOM) => {
-            const document = dom.window.document;
-            let nsregex = /\<(ns\d{1,2})\:HotelContentInfo\>/gi.exec(dom.serialize());
-            if (!nsregex) {
-                return Promise.reject("Namespace not found!");
-            }
-            let ns = nsregex![1];
-            Util.vorpal.log(`Using name space ${Util.printValue(ns)} to parse data`);
-            let hotels = document.getElementsByTagName(`${ns}:HotelContentInfo`);
-            let results: Array<SabreHotel> = new Array<SabreHotel>();
-            for (let hotel of hotels) {
-                let result = new mongo.models.SabreHotel!();
-                let id = mongo.mongo.Types.ObjectId();
-                result.set(`_id`, id);
-                let hotelbasic = document.getElementsByTagName(`${ns}:HotelInfo`)[0];
-                result.set(`sabreID`, hotelbasic.getAttribute('HotelCode'));
-                result.set(`sabreName`, hotelbasic.getAttribute('HotelName'));
-                result.set(`sabreChainName`, hotelbasic.getAttribute('ChainName'));
-                result.set(`logo`, hotelbasic.getAttribute('Logo'));
-                result.set(`loc`, [hotelbasic.getAttribute('Longitude'), hotelbasic.getAttribute('Latitude')]);
-                let address = new Array<string>();
-                let address_comp = hotel.getElementsByTagName(`${ns}:AddressLine1`)[0];
-                address_comp? address.push(address_comp.textContent!) : void(0);
-                address_comp = hotel.getElementsByTagName(`${ns}:CityName`)[0];
-                address_comp? address.push(address_comp.textContent!) : void(0);
-                address_comp = hotel.getElementsByTagName(`${ns}:PostalCode`)[0];
-                address_comp? address.push(address_comp.textContent!) : void(0);
-                address_comp = hotel.getElementsByTagName(`${ns}:AddressLine1`)[0];
-                if (address_comp) {
-                    let code = address_comp.getAttribute('Code')!
-                    let cdata = Util.country.lookup.countries({alpha2: code});
-                    address.push((cdata.length > 0)? cdata[0].name: '');
-                }
-                result.set(`address`, address.join(', '));
-                let imageselements = document.getElementsByTagName(`${ns}:Image`);
-                let images: Array<SabreImage> = new Array<SabreImage>();
-                for (let imageelement of imageselements) {
-                    let image = new mongo.models.SabreImage!();
-                    let url = imageelement.getAttribute('Url');
-                    image.set(`url`, url);
-                    image.set(`filename`, url!.substr(url!.lastIndexOf('/') + 1));
-                    images.push(image);
-                };
-                result.set(`images`, images);
-                // constant data
-                result.set(`groups`, [ "st" ]);
-                result.set(`code`, "ABC");
-                result.set(`city`, "??");
-                let hoteldescription = document.getElementsByTagName(`${ns}:HotelDescriptiveInfo`)[0];
-                let hotelmedia = document.getElementsByTagName(`${ns}:HotelMediaInfo`)[0];
-                results.push(result);
-            }
+            let results = this.ParseHotelDetail(dom);
             // step 2 search in SabreHotels the matching name, then if found, upadte it with sabre data
             // otherwise create new sabrehotels data
             if (results.length == 0) {
@@ -331,93 +460,9 @@ export default class HotelLookup {
             data: end_date,
         }], task.get("rejectOnRequestFail")?  false:true)
         .then((dom: JSDOM) => {
-            const document = dom.window.document;
-            let basicinfo = document.getElementsByTagName('BasicPropertyInfo')[0];
-            let roomrates = document.getElementsByTagName('RoomRate');
-            let results: Array<any> = new Array<any>();
-            const description_texts = basicinfo.querySelectorAll("VendorMessages Description Text");
-            let description_text = new Array<string>();
-            for (let text of description_texts) {
-                let _text = text.textContent!.toLowerCase();
-                description_text.push(_text!.charAt(0).toUpperCase() + _text.slice(1));
-            }
-            task.hotel!.set('description', description_text.join(" "));
-            let hotel_tax_tag = basicinfo.querySelector("Taxes Text");
-            if (hotel_tax_tag) {
-                let hotel_tax = hotel_tax_tag.textContent!.match(/\d+/);
-                if (hotel_tax) {
-                    task.hotel!.set(`taxes`, parseFloat(hotel_tax[0]));
-                }
-            }
-            for (let roomrate of roomrates) {
-                let rate = roomrate.querySelector('Rate[CurrencyCode=USD]');
-                let result = new mongo.models.SabreSuite!();
-                result.set("sabreID", roomrate.getAttribute('IATA_CharacteristicIdentification')!);
-                result.set("IATA", roomrate.getAttribute('IATA_ProductIdentification')!);
-                result.set("name", result.IATA);
-                let suite_descriptions: any;
-                suite_descriptions = roomrate.querySelectorAll("AdditionalInfo > Text");
-                let suite_description = new Array<string>();
-                for (let description of suite_descriptions) {
-                    let _text = description.textContent!.toLowerCase();
-                    suite_description.push((_text!.charAt(0).toUpperCase() + _text.slice(1)).trim());
-                }
-                result.set("description", suite_description.join(" "));
-                let cancel_policy_tag = roomrate.querySelector("AdditionalInfo > CancelPolicy");
-                let cancel_policy = new mongo.models.RateCancelPolicy!();
-                if (cancel_policy_tag != null) {
-                    cancel_policy.set("numeric", parseInt(cancel_policy_tag!.getAttribute("Numeric")!, undefined));
-                    cancel_policy.set("option", cancel_policy_tag!.getAttribute("Option")!);
-                    cancel_policy.set("description", cancel_policy_tag!.textContent!);
-                    result.set("cancel_policy", cancel_policy);
-                }
-                let commission_tag = roomrate.querySelector("AdditionalInfo > Commission");
-                let commission = new mongo.models.RateCommission!();
-                if (commission_tag != null) {
-                    commission.set("enabled", commission_tag!.getAttribute("NonCommission") == "false");
-                    commission.set("description", commission_tag!.textContent!);
-                    result.set("commission", commission);
-                }
-                let dca_cancelation_tag = roomrate.querySelector("AdditionalInfo > DCA_Cancelation");
-                if (dca_cancelation_tag != null) {
-                    result.set("dca_cancelation", dca_cancelation_tag!.textContent!);
-                }
-                let rate_with_tax_tag = rate!.querySelector("HotelTotalPricing");
-                let rate_with_tax = new mongo.models.RateTaxes!();
-                if (rate_with_tax_tag != null) {
-                    rate_with_tax.set("total_rate", parseFloat(rate_with_tax_tag.getAttribute("Amount")!));
-                    let disclaimer_tag = rate!.querySelector("HotelTotalPricing");
-                    if (disclaimer_tag) rate_with_tax.set("disclaimer", disclaimer_tag.textContent!);
-                    let surcharges_tag = rate!.querySelector("TotalSurcharges");
-                    if (surcharges_tag) rate_with_tax.set("surcharges", parseFloat(surcharges_tag.getAttribute("Amount")!));
-                    let taxes_tag = rate!.querySelector("TotalTaxes");
-                    if (taxes_tag) rate_with_tax.set("taxes", parseFloat(taxes_tag.getAttribute("Amount")!));
-                    result.set("taxes", rate_with_tax);
-                }
-                result.set("rate", parseFloat(rate!.getAttribute('Amount')!));
-                result.set("discounts", []);
-                result.set("images", []);
-                result.set("facilities", []);
-                result.set("is_visible", true);
-                result.set("is_available", true);
-                result.set("is_deleted", false);
-                if (commission.get("enabled")) {
-                    results.push(result);
-                }
-                let currenttime = moment(moment.now()).toDate();
-                result.set("changes_log", []);
-                result.set("created_at", currenttime);
-                result.set("verified", false);
-            }
-            // Sort by hotel rate
-            results = _.sortBy(results, ["rate"], ["asc"]);
-            // only get 1
-            // results = results.slice(0, 1);
-            task.hotel!.set('suites', results);
-            
-            task.hotel!.set(`city`, basicinfo.getAttribute("HotelCityCode"));
             // step 2 search in SabreHotels the matching name, then if found, update it with sabre data
             // otherwise create new sabrehotels data
+            task = this.ParseHotelPropertyDescription(task, dom);
             Util.vorpal.log(`Obtained ${Util.printValue(task.hotel!.get('suites').length)} suites(s) for `+
                 `${Util.printValue(task.hotel!.get('sabreName'))}`);
             return Promise.resolve(task);
