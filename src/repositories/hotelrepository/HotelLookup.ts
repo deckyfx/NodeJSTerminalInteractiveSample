@@ -357,9 +357,9 @@ export default class HotelLookup {
                         let date_range_amount       = parseFloat(date_range_tag.getAttribute("Amount")!);
                         let date_range_surcharges   = parseFloat(date_range_tag.getAttribute("Surcharges")!);
                         let date_range_taxes        = parseFloat(date_range_tag.getAttribute("Taxes")!);
-                        let date_range_startdate    = `2019-${date_range_tag.getAttribute("EffectiveDate")}` ;
-                        let date_range_enddate      = `2019-${date_range_tag.getAttribute("ExpireDate")}`;
-                        duration                    = moment(date_range_startdate).diff(moment(date_range_enddate), 'days');
+                        let date_range_startdate    = `${moment().format('YYYY')}-${date_range_tag.getAttribute("EffectiveDate")}` ;
+                        let date_range_enddate      = `${moment().format('YYYY')}-${date_range_tag.getAttribute("ExpireDate")}`;
+                        duration                    += moment(date_range_startdate).diff(moment(date_range_enddate), 'days');
                         total_price_in_date_range   += Math.abs(duration) * date_range_amount;
                     }
                     result.set("total_rate",        total_price_in_date_range);
