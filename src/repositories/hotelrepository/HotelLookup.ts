@@ -359,8 +359,9 @@ export default class HotelLookup {
                         let date_range_taxes        = parseFloat(date_range_tag.getAttribute("Taxes")!);
                         let date_range_startdate    = `${moment().format('YYYY')}-${date_range_tag.getAttribute("EffectiveDate")}` ;
                         let date_range_enddate      = `${moment().format('YYYY')}-${date_range_tag.getAttribute("ExpireDate")}`;
-                        duration                    += Math.abs(moment(date_range_startdate).diff(moment(date_range_enddate), 'days'));
-                        total_price_in_date_range   += duration * date_range_amount;
+                        let temp_duration           = Math.abs(moment(date_range_startdate).diff(moment(date_range_enddate), 'days'));
+                        duration                    += temp_duration
+                        total_price_in_date_range   += temp_duration * date_range_amount;
                     }
                     result.set("total_rate",        total_price_in_date_range);
                     result.set("total_rate_tax",    rate_with_tax.get("total_rate"));
