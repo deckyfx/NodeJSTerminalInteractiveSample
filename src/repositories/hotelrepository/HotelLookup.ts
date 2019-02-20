@@ -359,25 +359,25 @@ export default class HotelLookup {
                         let date_range_taxes        = parseFloat(date_range_tag.getAttribute("Taxes")!);
                         let date_range_startdate    = `${moment().format('YYYY')}-${date_range_tag.getAttribute("EffectiveDate")}` ;
                         let date_range_enddate      = `${moment().format('YYYY')}-${date_range_tag.getAttribute("ExpireDate")}`;
-                        duration                    += moment(date_range_startdate).diff(moment(date_range_enddate), 'days');
-                        total_price_in_date_range   += Math.abs(duration) * date_range_amount;
+                        duration                    += Math.abs(moment(date_range_startdate).diff(moment(date_range_enddate), 'days'));
+                        total_price_in_date_range   += duration * date_range_amount;
                     }
                     result.set("total_rate",        total_price_in_date_range);
                     result.set("total_rate_tax",    rate_with_tax.get("total_rate"));
                     result.set("tax",               rate_with_tax.get("total_rate") - total_price_in_date_range);
-                    result.set("duration",  Math.abs(duration));
+                    result.set("duration",  duration);
                 } else {
                     let timespan_tag = document.getElementsByTagName('TimeSpan')[0];
                     if (timespan_tag) {
                         let timespan_start_date     = timespan_tag.getAttribute("Start")!;
                         let timespan_end_date       = timespan_tag.getAttribute("End")!;
-                        let duration                = moment(timespan_start_date).diff(moment(timespan_end_date), 'days');
+                        let duration                = Math.abs(moment(timespan_start_date).diff(moment(timespan_end_date), 'days'));
                         let total_rate              = parseFloat(rate!.getAttribute('Amount')!);
-                        let total_price_in_date_range   = total_rate * Math.abs(duration);
+                        let total_price_in_date_range   = total_rate * duration;
                         result.set("total_rate",    total_price_in_date_range );
                         result.set("total_rate_tax", rate_with_tax.get("total_rate"));
                         result.set("tax",           rate_with_tax.get("total_rate") - total_price_in_date_range);
-                        result.set("duration",      Math.abs(duration));
+                        result.set("duration",      duration);
                     }
                 }
             }
