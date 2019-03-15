@@ -19,7 +19,7 @@ export class MongoDB {
     private static SSH_TUNNEL_HOST: string              = "52.9.87.130";
     private static SSH_TUNNEL_USERNAME: string          = "ubuntu";
     private static SSH_TUNNEL_PASSWORD: string          = "";
-    private static SSH_TUNNEL_USE_KEY: boolean          = true;
+    private static SSH_TUNNEL_USE_KEY: boolean          = false;
     private static SSH_TUNNEL_KEY: string               = path.join(".", "key", "suitetreatstag.pem");
     private static SSH_TUNNEL_PORT: number              = 22;
     private static MONGODB_HOST: string                 = "localhost";
