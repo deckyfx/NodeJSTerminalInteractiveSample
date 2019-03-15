@@ -26,3 +26,10 @@
 ### using cronjobs
 - to update hotels scheduled by os cronjob, run the program with arguments ```updatehotels -o```
 - ```npm run start updatehotels -o```
+- 
+### Using nvm
+- ```npm install -g nvm```
+- ```nvm install v11.11.0```
+- ```nvm exec npm install -d```
+- ```nvm exec npm run compile```
+- ```nvm exec npm run start```
