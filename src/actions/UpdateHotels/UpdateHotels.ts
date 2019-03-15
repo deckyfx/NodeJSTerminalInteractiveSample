@@ -14,6 +14,7 @@ type CommandArgument = {
     options?: { 
         [key:string]: any,
         forever?: boolean,
+        once?: boolean,
         add?: boolean,
     } 
 }
@@ -56,6 +57,11 @@ export default class UpdateHotels extends ActionBase {
                     resolve(true);
                 })
             } else if (this.args!.options!.forever) {
+                this.GetUpdateRequest()
+                .then(() => {
+                    resolve(true);
+                })
+            } else if (this.args!.options!.once) {
                 this.GetUpdateRequest()
                 .then(() => {
                     resolve(true);
@@ -140,15 +146,8 @@ export default class UpdateHotels extends ActionBase {
         .then((update_tasks)=> {
             Util.spinner.stop();
             if (update_tasks.length == 0) {
-                // repeat
-                Util.vorpal.log(`No update task, repeat after delay 5 seconds`);
-                return new Promise<void>((resolve, reject) => {
-                    setTimeout(() => {
-                        resolve();
-                    }, 5000)
-                }).then(() => {
-                    return this.GetUpdateRequest();
-                })
+                Util.vorpal.log(`No update task`);
+                return this.DoneUpdating();
             } else {
                 Util.vorpal.log(`Found ${Util.printValue(update_tasks.length)} update task...`);
                 let result: Array<Task> = _.map(_.filter(update_tasks, (update_task) => {
@@ -180,12 +179,29 @@ export default class UpdateHotels extends ActionBase {
                     return Util.SequencePromises<Task, Task>(tasks, this.SearchHotelBridgeThenRemoveUpdateTask.bind(this))
                     .then((tasks) => {
                         // repeat
-                        Util.vorpal.log(`Done, repeat`);
-                        return this.GetUpdateRequest();
+                        Util.vorpal.log(`Done`);
+                        return this.DoneUpdating();
                     });
                 })
             }
         })
+    }
+
+    private DoneUpdating(): Promise<boolean> {
+        if (this.args!.options!.forever) {
+            Util.vorpal.log(`repeat after delay 5 seconds`);
+            return new Promise<void>((resolve, reject) => {
+                setTimeout(() => {
+                    resolve();
+                }, 5000)
+            }).then(() => {
+                return this.GetUpdateRequest();
+            })
+        } else if (this.args!.options!.once) {
+            return Promise.resolve(true);
+        } else {
+            return Promise.resolve(true);
+        }
     }
 
     private SearchHotelBridge(_task: Task): Promise<Task> {

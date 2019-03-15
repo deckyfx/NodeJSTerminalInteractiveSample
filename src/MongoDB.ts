@@ -14,7 +14,7 @@ const tunnel = require('tunnel-ssh');
 export class MongoDB {
     // Modify this!
     public static BYPASS_SABREHOTELS: boolean           = false;
-    private static SSH_TUNNEL_ENABLED: boolean          = true;
+    private static SSH_TUNNEL_ENABLED: boolean          = false;
 
     private static SSH_TUNNEL_HOST: string              = "52.9.87.130";
     private static SSH_TUNNEL_USERNAME: string          = "ubuntu";

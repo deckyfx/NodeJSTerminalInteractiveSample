@@ -14,5 +14,15 @@
 - You may need key files to connect to mongodb via ssh tunnel, put them in "key" folder
 - run ```npm run start```
 - type help for avaliable commands
-- wait and drink cofee
-- profit
+
+## Update Hotel Forever mode
+-  Run ```updatehotels -f```
+-  That's it
+
+### Guide
+- To update hotels data, create new document in ```Hotel_Update_Request``` collection
+- document should have ```sabreID```
+
+### using cronjobs
+- to update hotels scheduled by os cronjob, run the program with arguments ```updatehotels -o```
+- ```npm run start updatehotels -o```
